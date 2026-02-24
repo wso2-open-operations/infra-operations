@@ -25,8 +25,8 @@ json_target_dir = "/home/fimuser/FIM/json_dir"
 # Config 
 # ----------------------
 config = configparser.ConfigParser()
-# config.read('fim.conf') 1.
-config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fim.conf')
+# config.read('fim-agent.conf') 1.
+config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fim-agent.conf')
 if not config.read(config_path):
     print(f"[Error] Config file not found: {config_path}", file=sys.stderr)
     sys.exit(1)

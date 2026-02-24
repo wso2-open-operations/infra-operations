@@ -11,7 +11,7 @@ logging.basicConfig(
 
 logger = logging.getLogger('fim-s3-uploader')
 
-CONFIG_FILE = 'fim.conf'
+CONFIG_FILE = 'fim-agent.conf'
 
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
