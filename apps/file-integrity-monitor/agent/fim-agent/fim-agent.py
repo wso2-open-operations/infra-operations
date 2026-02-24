@@ -1,4 +1,19 @@
-#!/usr/bin/env python3
+#  Copyright (c) 2026 WSO2 LLC. (https://www.wso2.com).
+# 
+#  WSO2 LLC. licenses this file to you under the Apache License,
+#  Version 2.0 (the "License"); you may not use this file except
+#  in compliance with the License.
+#  You may obtain a copy of the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License. 
+
 import json
 import os
 import re
@@ -13,29 +28,21 @@ import pwd
 import socket
 
 
-# ----------------------
 # Paths 
-# ----------------------
+
 backup_dir = '/home/fimuser/BACKUP'
 input_file = '/var/log/audit/audit.log'
 json_target_dir = "/home/fimuser/FIM/json_dir"
 
 
-# ----------------------
 # Config 
-# ----------------------
+
 config = configparser.ConfigParser()
-# config.read('fim-agent.conf') 1.
 config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fim-agent.conf')
 if not config.read(config_path):
     print(f"[Error] Config file not found: {config_path}", file=sys.stderr)
     sys.exit(1)
 
-
-# EXCLUDED_EXTENSIONS = set(
-#     ext.strip().lower()
-#     for ext in config['DEFAULT']['EXCLUDED_EXTENSIONS'].split(',')
-# ) 2.
 
 try:
     EXCLUDED_EXTENSIONS = set(
@@ -53,18 +60,14 @@ if not LOGS_MONITORING_ENABLE:
     confidential_extensions.add('.log')
 
 
-# ----------------------
+
 # Exact-behavior helpers 
-# ----------------------
+
 def get_username_from_id(user_id):
     try:
         user_id = str(user_id)
         if user_id == '4294967295':
             return 'System'
-    #     username = subprocess.check_output(['id', '-nu', user_id], universal_newlines=True).strip()
-    #     return username
-    # except subprocess.CalledProcessError:
-    #     return None  3.
         uid_int = int(user_id)
         return pwd.getpwuid(uid_int).pw_name
     except (ValueError, KeyError):
@@ -111,8 +114,6 @@ def create_json(data, file_name):
 def is_readable_text_file(file_path):
 
     try:
-        # readablity = subprocess.run(['file', file_path], capture_output=True, text=True)
-        # output = readablity.stdout 4.
         result = subprocess.run(['/usr/bin/file', file_path], capture_output=True, text=True)
         output = result.stdout
 
@@ -124,8 +125,7 @@ def is_readable_text_file(file_path):
             return 'directory'
         else:
             return 'no'
-    # except Exception as e:
-    #     print(f"An error occurred for files readability: {e}") 5.
+
     except (FileNotFoundError, OSError) as e:
         print(f"An error occurred checking file readability: {e}")
         return 'no'
@@ -158,8 +158,7 @@ def remove_swp_files(directory):
 
 
 def get_hostname():
-    # with open('/etc/hostname', 'r') as f:
-    #     return f.read().strip() 6.
+
     try:
         with open('/etc/hostname', 'r') as f:
             return f.read().strip()
@@ -168,8 +167,7 @@ def get_hostname():
 
 
 def get_time_zone():
-    # with open('/etc/timezone', 'r') as f:
-    #     return f.read().strip() 7.
+
     try:
         with open('/etc/timezone', 'r') as f:
             return f.read().strip()
@@ -277,9 +275,9 @@ def get_latest_files(edit_directory, file_name):
     return latest_files
 
 
-# ----------------------
+
 # Stateful stream processor ( capture/global behavior)
-# ----------------------
+
 class StreamState:
     def __init__(self):
         self.syscall_info = {}
@@ -311,7 +309,7 @@ def process_log_line_equivalent(line: str):
             state.delete = 1
 
         # timestamp
-        # timestamp = re.search(r'audit\((\d+\.\d+)', line).group(1) 8.
+
         timestamp_match = re.search(r'audit\((\d+\.\d+)', line)
         if not timestamp_match:
             return
@@ -379,7 +377,7 @@ def process_log_line_equivalent(line: str):
         if (('parent_path' in state.syscall_info or state.chmod) and
             ('file_path' in state.syscall_info)):
 
-            # Build test_case
+            # Build 
             if state.chmod == 1:
                 test_case = [state.syscall_info.get('cwd_path', ''), state.syscall_info.get('file_path', '')]
             else:
@@ -414,7 +412,7 @@ def process_log_line_equivalent(line: str):
 
             # --- yes + not chmod + not delete => backup+diff
             if (kind == 'yes') and (not state.chmod) and (not state.delete):
-                # directory, file_name = os.path.split(full_path) 9.
+
                 directory, _file_name = os.path.split(full_path)
                 
                 remove_swp_files(directory)
@@ -495,7 +493,6 @@ def process_log_line_equivalent(line: str):
 
         return _reset_capture()
 
-    # else: ignore
     return
 
 
@@ -505,17 +502,14 @@ def _reset_capture():
     return
 
 
-# ----------------------
+
 # Tail + rotation
-# ----------------------
+
 def get_inode(path):
     return os.stat(path).st_ino
 
 
 def follow_log(input_file):
-    # syscall_info = {}
-    # buffer = []
-    # capture = False  10.
 
     while True:
         try:
@@ -542,7 +536,7 @@ def follow_log(input_file):
             print(f"[Warning] Log file not found: {input_file}, retrying...")
             time.sleep(1)
             continue
-        # except Exception: 11.
+
         except Exception as e:
             print(f"[Error] Unexpected error in follow_log: {e}")
             time.sleep(1)
