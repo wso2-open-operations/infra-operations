@@ -28,6 +28,7 @@ required_envs = [
     AWS_SECRET_ACCESS_KEY,
     AWS_REGION,
     S3_BUCKET_NAME,
+    DB_HOST,
     DB_USER,
     DB_PASSWORD,
     DB_NAME,
