@@ -10,9 +10,6 @@ WORKDIR /app
 # Copy application code
 COPY app/ /app/
 
-# Copy SSL certificates
-COPY certs/ /app/certs/
-
 # Install Python dependencies and create runtime folder
 RUN pip install --no-cache-dir boto3 mysql-connector-python \
     && mkdir -p /app/centralised_bak

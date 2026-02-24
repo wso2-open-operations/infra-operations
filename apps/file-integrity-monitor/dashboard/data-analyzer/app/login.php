@@ -4,9 +4,7 @@ session_start();
 
 // Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-   // $username = getenv('DASH_USER') ?: '';
-  //  $password = getenv('DASH_PASS') ?: ''; 1.
+
     $username = getenv('DASH_USER');
     $password = getenv('DASH_PASS');
 
@@ -15,8 +13,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($username === false || $password === false || $username === '' || $password === '') {
         $error = "Login is not configured.";
+        
     // Check the input
-    //if ($_POST["username"] === $username && $_POST["password"] === $password) { 2.
     } elseif ($inputUser === $username && $inputPass === $password) {
         $_SESSION["loggedin"] = true;
         header("Location: dashboard.php");
