@@ -1,0 +1,105 @@
+import os
+import time
+import boto3
+import configparser
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+
+logger = logging.getLogger('fim-s3-uploader')
+
+CONFIG_FILE = 'fim-agent.conf'
+
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
+
+# General limits
+FILE_SIZE_LIMIT = int(
+    config['DEFAULT'].get('FILE_SIZE_MB', 10)
+) * 1024 * 1024  # MB → bytes
+
+# S3 settings
+BUCKET_NAME = config['S3']['BUCKET_NAME']
+JSON_DIR = config['S3']['JSON_DIR']
+UPLOAD_INTERVAL = int(config['S3'].get('UPLOAD_INTERVAL', 300))
+
+AWS_ACCESS_KEY_ID = config['S3']['AWS_ACCESS_KEY_ID']
+AWS_SECRET_ACCESS_KEY = config['S3']['AWS_SECRET_ACCESS_KEY']
+AWS_REGION = config['S3'].get('AWS_REGION', 'us-west-2')
+
+
+def initialize_s3_client():
+    return boto3.client(
+        's3',
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        region_name=AWS_REGION
+    )
+
+def upload_to_s3(s3_client, bucket_name, file_path):
+    try:
+        s3_client.upload_file(
+            file_path,
+            bucket_name,
+            os.path.basename(file_path)
+        )
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+    except Exception as e:
+        logger.error("Failed to upload %s: %s", file_path, e)
+
+
+def upload_files_periodically(s3_client, bucket_name, json_dir, interval):
+
+    logger.info(
+        "FIM S3 uploader started | bucket=%s | interval=%ds | max_file=%d bytes",
+        bucket_name,
+        interval,
+        FILE_SIZE_LIMIT
+    )
+
+    while True:
+        try:
+            files = [
+                os.path.join(json_dir, f)
+                for f in os.listdir(json_dir)
+                if f.endswith('.json')
+                and os.path.isfile(os.path.join(json_dir, f))
+            ]
+
+            for file_path in files:
+                try:
+                    file_size = os.path.getsize(file_path)
+
+                    if file_size > FILE_SIZE_LIMIT:
+                        logger.warning(
+                            "Skipped oversized file: %s (%d bytes)",
+                            file_path,
+                            file_size
+                        )
+                        continue
+
+                    upload_to_s3(s3_client, bucket_name, file_path)
+
+                except FileNotFoundError:
+                    continue
+
+            time.sleep(interval)
+
+        except Exception:
+            logger.exception("Upload loop error")
+            time.sleep(5)
+
+if __name__ == "__main__":
+    s3_client = initialize_s3_client()
+    upload_files_periodically(
+        s3_client,
+        BUCKET_NAME,
+        JSON_DIR,
+        UPLOAD_INTERVAL
+    )
