@@ -1,3 +1,20 @@
+#   Copyright (c) 2026 WSO2 LLC. (https://www.wso2.com).
+
+#  WSO2 LLC. licenses this file to you under the Apache License,
+#  Version 2.0 (the "License"); you may not use this file except
+#  in compliance with the License.
+#  You may obtain a copy of the License at
+
+#  http://www.apache.org/licenses/LICENSE-2.0
+
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License. 
+
+
 import boto3
 import json
 import time
@@ -6,9 +23,8 @@ import mysql.connector
 from mysql.connector import Error
 
 
-# =========================
 # Load environment variables
-# =========================
+
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION")
@@ -20,9 +36,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 
-# =========================
 # Validate required configs
-# =========================
+
 required_envs = [
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
@@ -38,9 +53,9 @@ if not all(required_envs):
     raise RuntimeError("Missing one or more required environment variables")
 
 
-# =========================
+
 # Initialize S3 client
-# =========================
+
 def initialize_s3_client():
     return boto3.client(
         "s3",
@@ -50,9 +65,9 @@ def initialize_s3_client():
     )
 
 
-# =========================
-# Create LOCAL DB connection (NO SSL)
-# =========================
+
+# Create LOCAL DB connection 
+
 def create_connection():
     try:
         connection = mysql.connector.connect(
@@ -66,13 +81,13 @@ def create_connection():
         print("✅ Connected to LOCAL MySQL DB")
         return connection
     except Error as e:
-        print(f"❌ Database connection error: {e}")
+        print(f" Database connection error: {e}")
         return None
 
 
-# =========================
+
 # Process a single JSON file
-# =========================
+
 def process_json_file(file_path, cursor):
     try:
         with open(file_path, "r") as f:
@@ -95,23 +110,23 @@ def process_json_file(file_path, cursor):
             ),
         )
 
-        print(f"✅ Inserted: {data['machine_identifier']}")
+        print(f" Inserted: {data['machine_identifier']}")
         return True
 
     except KeyError:
-        print(f"⚠️ Invalid JSON structure: {file_path}")
+        print(f" Invalid JSON structure: {file_path}")
         return False
     except json.JSONDecodeError as e:
-        print(f"❌ JSON decode error {file_path}: {e}")
+        print(f" JSON decode error {file_path}: {e}")
         return False
     except Error as e:
-        print(f"❌ DB error {file_path}: {e}")
+        print(f" DB error {file_path}: {e}")
         return False
 
 
-# =========================
+
 # Fetch files from S3
-# =========================
+
 def fetch_and_process_files(s3_client, bucket_name, local_directory):
     connection = create_connection()
     if not connection:
@@ -126,7 +141,7 @@ def fetch_and_process_files(s3_client, bucket_name, local_directory):
                 file_name = obj["Key"]
                 local_file_path = os.path.join(local_directory, file_name)
 
-                print(f"⬇️ Downloading {file_name}")
+                print(f" Downloading {file_name}")
                 s3_client.download_file(bucket_name, file_name, local_file_path)
 
                 success = process_json_file(local_file_path, cursor)
@@ -134,38 +149,37 @@ def fetch_and_process_files(s3_client, bucket_name, local_directory):
                 if success:
                     s3_client.delete_object(Bucket=bucket_name, Key=file_name)
                     os.remove(local_file_path)
-                    print(f"🗑️  Removed {file_name}")
+                    print(f" Removed {file_name}")
                 else:
-                    print(f"⚠️ Retained {file_name}")
+                    print(f" Retained {file_name}")
 
     except Exception as e:
-        print(f"❌ Error processing S3 files: {e}")
+        print(f" Error processing S3 files: {e}")
 
     finally:
         cursor.close()
         connection.close()
 
 
-# =========================
 # Main loop
-# =========================
+
 def main():
     s3_client = initialize_s3_client()
     local_directory = "/app/centralised_bak"
     os.makedirs(local_directory, exist_ok=True)
 
-    print("🚀 S3 → LOCAL DB service started")
+    print(" S3 → LOCAL DB service started")
 
     while True:
         fetch_and_process_files(s3_client, S3_BUCKET_NAME, local_directory)
         time.sleep(300)  # 5 minutes
 
 
-# =========================
+
 # Entry point
-# =========================
+
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("🛑 Service stopped")
+        print(" Service stopped")
