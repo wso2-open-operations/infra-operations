@@ -257,8 +257,8 @@ ExecStart=${VENV_DIR}/bin/python ${FIM_DIR}/data-uploader.py
 WorkingDirectory=${FIM_DIR}
 Restart=always
 RestartSec=5
-User=root
-Group=root
+User=fimuser
+Group=fimuser
 NoNewPrivileges=true
 PrivateTmp=true
 
