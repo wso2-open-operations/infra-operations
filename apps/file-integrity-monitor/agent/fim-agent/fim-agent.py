@@ -300,6 +300,8 @@ def process_log_line_equivalent(line: str):
         state.delete = 0
         state.chmod = 0
         state.create = 0
+        state.syscall_info.clear()
+        state.buffer.clear()
         state.capture = True
         state.buffer.append(line)
 
@@ -497,8 +499,12 @@ def process_log_line_equivalent(line: str):
 
 
 def _reset_capture():
+    state.syscall_info.clear()
     state.buffer.clear()
     state.capture = False
+    state.chmod = 0
+    state.delete = 0
+    state.create = 0
     return
 
 
