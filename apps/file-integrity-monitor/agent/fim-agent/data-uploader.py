@@ -48,12 +48,11 @@ AWS_REGION = config['S3'].get('AWS_REGION', 'us-west-2')
 
 
 def initialize_s3_client():
-    return boto3.client(
-        's3',
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        region_name=AWS_REGION
-    )
+    client_kwargs = {"region_name": AWS_REGION}
+    if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+        client_kwargs["aws_access_key_id"] = AWS_ACCESS_KEY_ID
+        client_kwargs["aws_secret_access_key"] = AWS_SECRET_ACCESS_KEY
+    return boto3.client("s3", **client_kwargs)
 
 def upload_to_s3(s3_client, bucket_name, file_path):
     try:
