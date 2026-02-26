@@ -32,6 +32,11 @@ $machineFilter = $_POST['machineFilter'] ?? "";
 $conclusionFilter = $_POST['conclusionFilter'] ?? "";
 
 // Build SQL
+
+$page = max(1, (int)($_GET['page'] ?? 1));
+$rowsPerPage = 100;
+$offset = ($page - 1) * $rowsPerPage;
+
 $sql = "SELECT id, machine_identifier, conclusion, timestamp, readable_text_cmd, data_changed
         FROM `$table`
         WHERE timestamp BETWEEN ? AND ?";
@@ -50,7 +55,10 @@ if (!empty($conclusionFilter)) {
     $types .= "s";
 }
 
-$sql .= " ORDER BY id DESC";
+$sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+$params[] = $rowsPerPage;
+$params[] = $offset;
+$types .= "ii";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param($types, ...$params);
