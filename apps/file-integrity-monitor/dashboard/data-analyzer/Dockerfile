@@ -25,7 +25,7 @@ RUN a2ensite 000-default.conf \
     && a2enmod rewrite
 
 # App code
-COPY . /var/www/html/app/
+COPY app/ /var/www/html/app/
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html \
