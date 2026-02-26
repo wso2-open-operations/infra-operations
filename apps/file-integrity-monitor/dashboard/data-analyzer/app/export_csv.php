@@ -67,15 +67,20 @@ $output = fopen('php://output', 'w');
 // CSV header row
 fputcsv($output, ['ID', 'Machine Identifier', 'Conclusion', 'Timestamp', 'Execution Command', 'Data Diff']);
 
+function sanitize_csv_cell($value) {
+    $value = (string)$value;
+    return preg_match('/^[=\-+@]/', $value) ? "'" . $value : $value;
+}
+
 while ($row = $result->fetch_assoc()) {
     // Keep diff as full text; CSV will quote it safely
     fputcsv($output, [
         $row['id'],
-        $row['machine_identifier'],
-        $row['conclusion'],
-        $row['timestamp'],
-        $row['readable_text_cmd'],
-        $row['data_changed']
+        sanitize_csv_cell($row['machine_identifier']),
+        sanitize_csv_cell($row['conclusion']),
+        sanitize_csv_cell($row['timestamp']),
+        sanitize_csv_cell($row['readable_text_cmd']),
+        sanitize_csv_cell($row['data_changed'])
     ]);
 }
 
