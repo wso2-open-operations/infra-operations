@@ -29,7 +29,11 @@ COPY app/ /app/
 
 # Install Python dependencies and create runtime folder
 RUN pip install --no-cache-dir boto3 mysql-connector-python \
-    && mkdir -p /app/centralised_bak
+    && mkdir -p /app/centralised_bak \
+    && useradd -r -m -d /home/appuser -s /usr/sbin/nologin appuser \
+    && chown -R appuser:appuser /app
+
+USER appuser
 
 # Run the main Python script
 CMD ["python", "data-collector.py"]
