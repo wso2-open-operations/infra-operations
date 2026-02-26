@@ -139,7 +139,15 @@ def fetch_and_process_files(s3_client, bucket_name, local_directory):
         for obj in page.get("Contents", []):
             file_name = obj["Key"]
             try:
-                local_file_path = os.path.join(local_directory, file_name)
+                local_root = os.path.abspath(local_directory)
+                local_file_path = os.path.abspath(
+                    os.path.normpath(os.path.join(local_root, file_name))
+                )
+                if not local_file_path.startswith(local_root + os.sep):
+                    print(f" Skipping unsafe key: {file_name}")
+                    continue
+                os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+                
                 print(f" Downloading {file_name}")
                 s3_client.download_file(bucket_name, file_name, local_file_path)
 
