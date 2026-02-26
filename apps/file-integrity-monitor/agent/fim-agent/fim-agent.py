@@ -114,7 +114,14 @@ def create_json(data, file_name):
 def is_readable_text_file(file_path):
 
     try:
-        result = subprocess.run(['/usr/bin/file', file_path], capture_output=True, text=True)
+        result = subprocess.run(
+            ['/usr/bin/file', '--', file_path],
+            capture_output=True,
+            text=True,
+            timeout=3,
+            check=False
+        )
+        
         output = result.stdout
 
         if 'text' in output:
@@ -126,7 +133,10 @@ def is_readable_text_file(file_path):
         else:
             return 'no'
 
+    except subprocess.TimeoutExpired:
+        return 'no'
     except (FileNotFoundError, OSError) as e:
+        
         print(f"An error occurred checking file readability: {e}")
         return 'no'
 
