@@ -48,7 +48,9 @@ try {
         0          // flags → NO SSL
     );
 } catch (mysqli_sql_exception $e) {
-    die(' Database connection failed: ' . $e->getMessage());
+    error_log('Database connection failed: ' . $e->getMessage());
+    http_response_code(500);
+    die('Database connection failed.');
 }
 
 $conn->set_charset('utf8mb4');
