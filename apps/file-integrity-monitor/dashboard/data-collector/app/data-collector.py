@@ -135,26 +135,24 @@ def fetch_and_process_files(s3_client, bucket_name, local_directory):
     cursor = connection.cursor()
     paginator = s3_client.get_paginator("list_objects_v2")
 
-    try:
-        for page in paginator.paginate(Bucket=bucket_name):
-            for obj in page.get("Contents", []):
-                file_name = obj["Key"]
+    for page in paginator.paginate(Bucket=bucket_name):
+        for obj in page.get("Contents", []):
+            file_name = obj["Key"]
+            try:
                 local_file_path = os.path.join(local_directory, file_name)
-
                 print(f" Downloading {file_name}")
                 s3_client.download_file(bucket_name, file_name, local_file_path)
 
                 success = process_json_file(local_file_path, cursor)
-
                 if success:
                     s3_client.delete_object(Bucket=bucket_name, Key=file_name)
                     os.remove(local_file_path)
                     print(f" Removed {file_name}")
                 else:
                     print(f" Retained {file_name}")
-
-    except Exception as e:
-        print(f" Error processing S3 files: {e}")
+            except Exception as e:
+                print(f" Error processing {file_name}: {e}")
+                continue
 
     finally:
         cursor.close()
