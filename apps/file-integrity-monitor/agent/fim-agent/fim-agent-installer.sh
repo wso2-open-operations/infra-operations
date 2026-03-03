@@ -174,7 +174,7 @@ need_file "$CONF_SRC"
 echo "[INFO] Copying FIM agent files to $FIM_DIR..."
 install -m 0644 -o root -g root "$AGENT_SRC" "$AGENT_DST"
 install -m 0644 -o root -g root "$UPLOADER_SRC" "$UPLOADER_DST"
-install -m 0644 -o root -g root "$CONF_SRC" "$CONF_DST"
+install -m 0600 -o root -g root "$CONF_SRC" "$CONF_DST"
 
 # If your services run as root, root owning the dir is fine:
 chown -R root:root "$FIM_DIR"
