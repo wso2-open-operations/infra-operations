@@ -23,7 +23,6 @@ RUN docker-php-ext-install mysqli
 RUN a2enmod rewrite ssl
 
 # Apache config
-COPY config/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY config/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
 
 RUN a2ensite 000-default.conf \
@@ -47,6 +46,6 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod 644 /etc/apache2/ssl/server.crt \
     && chmod 600 /etc/apache2/ssl/server.key
 
-EXPOSE 80 443
+EXPOSE 443
 
 CMD ["apache2-foreground"]
