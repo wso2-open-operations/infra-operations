@@ -18,6 +18,12 @@
 
 
 ob_start();
+
+/* Secure session settings - must be before session_start() */
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_samesite', 'Strict');
+
 session_start();
 
 // Check if the form is submitted
@@ -34,7 +40,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Check the input
     } elseif ($inputUser === $username && $inputPass === $password) {
+
+        /* Prevent session fixation */
+        session_regenerate_id(true);
+
         $_SESSION["loggedin"] = true;
+
         header("Location: dashboard.php");
         exit;
     } else {
@@ -73,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         h1 {
             text-align: center;
-            color: #ff7f00; 
+            color: #ff7f00;
             margin-bottom: 20px;
             font-size: 24px;
         }
@@ -103,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .form-group input[type="submit"] {
-            background-color: #ff7f00; 
+            background-color: #ff7f00;
             color: #fff;
             border: none;
             cursor: pointer;
@@ -129,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .powered-by a {
-            color: #ff7f00; 
+            color: #ff7f00;
             text-decoration: none;
         }
 
@@ -161,7 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </form>
 
         <div class="powered-by">
-            <p>Powered by <a href="https://www.digiops.com" target="_blank">DigiOps</a></p>
+            <p>Powered by DigiOps</p>
         </div>
     </div>
 
