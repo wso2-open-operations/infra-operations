@@ -85,7 +85,6 @@ const Header = () => {
           <Typography
             variant="h5"
             sx={{
-              flexGrow: 1,
               cursor: "pointer",
               color: theme.palette.customText.primary.p1.active,
             }}
