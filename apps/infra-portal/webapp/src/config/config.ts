@@ -45,10 +45,22 @@ export const ServiceBaseUrl = window.config?.REACT_APP_BACKEND_BASE_URL ?? "";
 
 export const AppConfig = {
   serviceUrls: {
-    contacts: ServiceBaseUrl + "/contacts",
     userInfo: ServiceBaseUrl + "/user-info",
     employees: ServiceBaseUrl + "/employees",
-    appConfig: ServiceBaseUrl + "/app-config",
-    collections: ServiceBaseUrl + "/collections"
+    repositoryRequests: ServiceBaseUrl + "/repository-requests",
+    teams: ServiceBaseUrl + "/teams",
+    topics: ServiceBaseUrl + "/topics",
+    leads: ServiceBaseUrl + "/leads",
+    organizations: ServiceBaseUrl + "/organizations",
+    comments: (requestId: number) => `${ServiceBaseUrl}/repository-requests/${requestId}/comments`,
+    defaultTeams: ServiceBaseUrl + "/default-teams",
+  },
+  markdownUrls: {
+    overview: "/doc/userGuide/Overview.md",
+    submitRequest: "/doc/userGuide/SubmitRequest.md",
+    requestHistory: "/doc/userGuide/RequestHistory.md",
+    adminGuide: "/doc/userGuide/AdminGuide.md",
+    additionalDetails: "/doc/userGuide/AdditionalDetails.md",
+    troubleshoot: "/doc/userGuide/Troubleshoot.md",
   },
 };
