@@ -16,17 +16,85 @@
 
 export const SnackMessage = {
   success: {
-    addCollections: "Successfully added the Collection",
+    addCommentMessage: "Successfully added the comment",
+    fetchCommentsMessage: "Successfully fetched comments",
+
+    addLeadMessage: "Successfully added the Lead",
+    updateLeadMessage: "Successfully updated the Lead",
+    deleteLeadMessage: "Successfully deleted the Lead",
+    fetchLeadsMessage: "Successfully fetched the Leads",
+
+    addOrganizationMessage: "Successfully added the Organization",
+    updateOrganizationMessage: "Successfully updated the Organization",
+    syncOrganizationMessage: "Successfully synced the Organization",
+    deleteOrganizationMessage: "Successfully deleted the Organization",
+    fetchOrganizationsMessage: "Successfully fetched the Organizations",
+
+    addRepositoryRequests: "Successfully added the Repository Request",
+    approveRepositoryRequest: "Successfully approved the Repository Request",
+    fetchRepositoryRequestsMessage: "Successfully fetched the Repository Requests",
+    rejectRepositoryRequest: "Successfully rejected the Repository Request",
+    updateRepositoryRequest: "Successfully updated the Repository Request",
+
+    fetchEmployees: "Successfully fetched the Employees",
+
+    fetchPrivileges: "Successfully fetched Privileges",
+
+    addTopicMessage: "Successfully added the Topic",
+    updateTopicMessage: "Successfully updated the Topic",
+    deleteTopicMessage: "Successfully deleted the Topic",
+    fetchTopicsMessage: "Successfully fetched the Topics",
+
+    fetchTeamsMessage: "Successfully fetched the Teams",
+
+    fetchDefaultTeamsMessage: "Successfully fetched the Default Teams",
+    addDefaultTeamMessage: "Successfully added the Default Team",
+    updateDefaultTeamMessage: "Successfully updated the Default Team",
+    deleteDefaultTeamMessage: "Successfully deleted the Default Team",
+
+    syncedOrganizationMessage: "Visibility has been updated to Public due to Free plan restrictions.",
   },
   error: {
-    fetchCollectionsMessage: "Unable to retrieve list of selected Collections",
-    addCollections: "Unable to create the Collection",
-    insufficientPrivileges: "Insufficient Privileges",
-    fetchPrivileges: "Failed to fetch Privileges",
-    fetchContacts: "Unable to retrieve list of Contacts",
+    addCommentMessage: "Unable to add the comment",
+    fetchCommentsMessage: "failed to fetch comments",
+
+    addLeadMessage: "Unable to add the Lead",
+    updateLeadMessage: "Unable to update the Lead",
+    deleteLeadMessage: "Unable to delete the Lead",
+    fetchLeadsMessage: "Unable to retrieve list of Leads",
+
+    addOrganizationMessage: "Unable to add the Organization",
+    updateOrganizationMessage: "Unable to update the Organization",
+    syncOrganizationMessage: "Unable to sync the Organization",
+    deleteOrganizationMessage: "Unable to delete the Organization",
+    fetchOrganizationsMessage: "Unable to retrieve list of Organizations",
+
+    fetchOrganizationMessage: "Unable to retrieve Organization",
+
+    addRepositoryRequests: "Unable to add the Repository Request",
+    approveRepositoryRequest: "Unable to approve the Repository Request",
+    fetchRepositoryRequestsMessage: "Unable to retrieve list of Repository Requests",
+    rejectRepositoryRequest: "Unable to delete the Repository Request",
+    updateRepositoryRequest: "Unable to update the Repository Request",
+
     fetchEmployees: "Unable to retrieve list of Employees",
-    fetchCustomers: "Unable to retrieve list of Customers",
-    fetchAppConfigMessage: "Unable to retrieve app configurations",
+
+    fetchPrivileges: "Failed to fetch Privileges",
+    insufficientPrivileges: "Insufficient Privileges",
+
+    addTopicMessage: "Unable to add the Topic",
+    updateTopicMessage: "Unable to update the Topic",
+    deleteTopicMessage: "Unable to delete the Topic",
+    fetchTopicsMessage: "Unable to retrieve list of Topics",
+
+    fetchTeamsMessage: "Error connecting to GitHub! Unable to retrieve list of Teams",
+
+    fetchDefaultTeamsMessage: "Unable to retrieve list of Default Teams",
+    addDefaultTeamMessage: "Unable to add the Default Team",
+    updateDefaultTeamMessage: "Unable to update the Default Team",
+    deleteDefaultTeamMessage: "Unable to delete the Default Team",
+
+    fetchUserGuideMessage: "Unable to retrieve User Guide documents",
   },
   warning: {},
 };
