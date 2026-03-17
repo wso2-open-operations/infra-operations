@@ -90,7 +90,7 @@ export default function Layout() {
           <Box
             sx={{
               flex: 1,
-              height: "100%",
+              overflow: "auto",
               padding: theme.spacing(3),
             }}
           >
