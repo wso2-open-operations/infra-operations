@@ -17,7 +17,7 @@ import axios, { AxiosResponse, HttpStatusCode } from "axios";
 interface RepositoryRequestState {
   state: State;
   errorMessage: string | null;
-  repositoryRequests: RepositoryRequests | undefined;
+  repositoryRequests: RepositoryRequests;
   submitState: State;
   functionType?: string;
 }
@@ -26,7 +26,13 @@ const initialState: RepositoryRequestState = {
   state: State.idle,
   submitState: State.idle,
   errorMessage: null,
-  repositoryRequests: undefined,
+  repositoryRequests: {
+    totalCount: 0,
+    pendingCount: 0,
+    approvedCount: 0,
+    rejectedCount: 0,
+    repositoryRequests: [],
+  },
   functionType: undefined,
 };
 
@@ -64,8 +70,14 @@ export interface RepositoryRequest {
   azureDevopsOrg?: string;
   azureDevopsProject?: string;
   timestamp: string;
-  state: string;
+  state: RequestApprovalState;
   updatedAt: string;
+}
+
+export enum RequestApprovalState {
+  PENDING = "Pending",
+  APPROVED = "Approved",
+  REJECTED = "Rejected",
 }
 
 export interface AddRepositoryRequestPayload {
@@ -93,8 +105,9 @@ export interface AddRepositoryRequestPayload {
 }
 
 export interface RepositoryRequestFilter {
-  memberEmail?: string;
-  leadEmail?: string;
+  memberEmail?: string | undefined;
+  leadEmail?: string | undefined;
+  approvalState?: RequestApprovalState;
   limit?: number;
   offset?: number;
   repoName?: string;
@@ -294,7 +307,13 @@ const RepositoryRequestSlice = createSlice({
     resetRepositoryRequestState(state) {
       state.state = State.idle;
       state.submitState = State.idle;
-      state.repositoryRequests = undefined;
+      state.repositoryRequests = {
+        totalCount: 0,
+        pendingCount: 0,
+        approvedCount: 0,
+        rejectedCount: 0,
+        repositoryRequests: [],
+      };
       state.errorMessage = null;
       state.functionType = undefined;
     },

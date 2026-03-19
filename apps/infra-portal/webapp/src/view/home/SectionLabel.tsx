@@ -13,18 +13,30 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { lazy } from "react";
+import { Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
-const help = lazy(() => import("@view/help/help"));
-const nestedPage = lazy(() => import("@view/nested-page/NestedPage"));
-const firstView = lazy(() => import("@view/first-view"));
-const pageTwo = lazy(() => import("@view/page-two/PageTwo"));
-const home = lazy(() => import("@view/home/Home"));
+import React from "react";
 
-export const View = {
-  help,
-  nestedPage,
-  firstView,
-  pageTwo,
-  home,
-};
+interface SectionLabelProps {
+  children: React.ReactNode;
+}
+
+export default function SectionLabel({ children }: SectionLabelProps) {
+  const theme = useTheme();
+  return (
+    <Typography
+      sx={{
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.09em",
+        textTransform: "uppercase",
+        color: theme.palette.customText.primary.p3.active,
+        fontFamily: "monospace",
+        mb: 1.5,
+      }}
+    >
+      {children}
+    </Typography>
+  );
+}

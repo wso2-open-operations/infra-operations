@@ -18,22 +18,32 @@ import { enableMapSet } from "immer";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 import authReducer from "@slices/authSlice/auth";
-import collectionReducer from "@slices/collections/collection";
+import commentsReducer from "@slices/commentSlice/comment";
 import commonReducer from "@slices/commonSlice/common";
-import appConfigReducer from "@slices/configSlice/config";
+import defaultTeamsReducer from "@slices/defaultTeamSlice/defaultTeams";
 import employeeReducer from "@slices/employeeSlice/employee";
+import leadsReducer from "@slices/leadsSlice/leads";
+import organizationsReducer from "@slices/organizationsSlice/organizations";
+import repositoryRequestReducer from "@slices/repositoryRequestSlice/repositoryRequest";
+import teamsReducer from "@slices/teamsSlice/teams";
+import topicsReducer from "@slices/topicsSlice/topics";
 import userReducer from "@slices/userSlice/user";
 
 enableMapSet();
 
 export const store = configureStore({
   reducer: {
+    repositoryRequest: repositoryRequestReducer,
     auth: authReducer,
     user: userReducer,
     common: commonReducer,
     employee: employeeReducer,
-    collection: collectionReducer,
-    appConfig: appConfigReducer,
+    teams: teamsReducer,
+    topics: topicsReducer,
+    leads: leadsReducer,
+    organizations: organizationsReducer,
+    comments: commentsReducer,
+    defaultTeams: defaultTeamsReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
 });

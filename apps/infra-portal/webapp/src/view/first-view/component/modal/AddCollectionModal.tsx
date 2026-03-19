@@ -106,7 +106,7 @@ const AddCollectionModal: React.FC<{ toggleClose: () => void }> = ({ toggleClose
         </DialogContentText>
 
         {/* Collection Details */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Box
             //updated
             component="span"

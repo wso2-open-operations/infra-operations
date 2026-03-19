@@ -19,8 +19,8 @@ import Typography from "@mui/material/Typography";
 
 import React from "react";
 
-import logoBlack from "@assets/images/wso2-logo-black.png";
-import logoWhite from "@assets/images/wso2-logo-white.png";
+import logoBlack from "@assets/images/wso2-logo_black.svg";
+import logoWhite from "@assets/images/wso2-logo_white.svg";
 import { APP_NAME } from "@config/config";
 import { useAppAuthContext } from "@context";
 import BasicBreadcrumbs from "@layout/BreadCrumbs/BreadCrumbs";
@@ -45,7 +45,7 @@ const Header = () => {
       sx={{
         zIndex: 10,
         backgroundColor: theme.palette.surface.territory.active,
-        boxShadow: theme.shadows[4],
+        boxShadow: theme.shadows[2],
       }}
     >
       <Toolbar
@@ -62,13 +62,12 @@ const Header = () => {
         <img
           alt="wso2"
           style={{
-            height: "20px",
+            height: "40px",
             width: "auto",
             cursor: "pointer",
-            marginLeft: "8px",
           }}
           onClick={() => (window.location.href = "/")}
-          src={ theme.palette.mode === "dark" ? logoWhite : logoBlack}
+          src={theme.palette.mode === "dark" ? logoWhite : logoBlack}
         ></img>
 
         <Box
@@ -79,7 +78,6 @@ const Header = () => {
             width: "100%",
             alignItems: "center",
             height: "100%",
-            ml: 1
           }}
         >
           <Typography
@@ -103,8 +101,8 @@ const Header = () => {
                   <Avatar
                     onClick={handleOpenUserMenu}
                     sx={{
-                      width: 48,
-                      height: 48,
+                      height: "100%",
+                      aspectRatio: "1 / 1",
                       border: 1,
                       borderColor: theme.palette.customBorder.territory.active,
                     }}
