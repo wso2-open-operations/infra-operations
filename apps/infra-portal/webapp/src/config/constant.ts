@@ -1,4 +1,4 @@
-// Copyright (c) 2025 WSO2 LLC. (https://www.wso2.com).
+// Copyright (c) 2026 WSO2 LLC. (https://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -52,7 +52,8 @@ export const SnackMessage = {
     updateDefaultTeamMessage: "Successfully updated the Default Team",
     deleteDefaultTeamMessage: "Successfully deleted the Default Team",
 
-    syncedOrganizationMessage: "Visibility has been updated to Public due to Free plan restrictions.",
+    syncedOrganizationMessage:
+      "Visibility has been updated to Public due to Free plan restrictions.",
   },
   error: {
     addCommentMessage: "Unable to add the comment",
