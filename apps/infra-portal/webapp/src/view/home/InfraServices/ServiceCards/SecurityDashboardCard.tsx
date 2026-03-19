@@ -24,7 +24,7 @@ import {
   SecurityDashboard_Software_Compliance,
 } from "@config/config";
 
-import ServiceRow from "../ServiceRow";
+import ServiceRow from "./ServiceRow";
 
 function SecurityIcon({ color }: { color: string }) {
   return (
