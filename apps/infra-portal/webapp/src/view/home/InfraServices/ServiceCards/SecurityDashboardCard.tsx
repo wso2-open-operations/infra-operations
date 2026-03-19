@@ -98,7 +98,7 @@ export default function SecurityDashboardCard() {
           <Typography
             sx={{
               fontSize: 14,
-              fontWeight: 600,
+              // fontWeight: 600,
               color: theme.palette.customText.primary.p1.active,
             }}
           >
