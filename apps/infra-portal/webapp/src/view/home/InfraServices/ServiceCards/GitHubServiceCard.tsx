@@ -18,7 +18,7 @@ import { Box, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { ChevronRight } from "lucide-react";
 
-import ServiceRow from "../ServiceRow";
+import ServiceRow from "./ServiceRow";
 
 export interface GitHubServiceCardProps {
   canReview: boolean;
