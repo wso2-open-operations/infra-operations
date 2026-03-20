@@ -23,6 +23,8 @@ import ballerina/cache;
 import ballerina/http;
 import ballerina/log;
 
+configurable SecurityDashboardLinks securityDashboardLinks = ?;
+
 final cache:Cache cache = new ({
     capacity: 2000,
     defaultMaxAge: 1800.0,
