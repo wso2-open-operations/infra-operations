@@ -204,6 +204,22 @@ public type RepositoryRequestUpdate record {|
     string? state = ();
 |};
 
+# Filters for the repository request list.
+public type RepositoryRequestFilter record {|
+    # Repository name
+    string? repoName = ();
+    # Member email
+    string? memberEmail = ();
+    # Lead email
+    string? leadEmail = ();
+    # Approval state 
+    RepositoryRequestState? approvalState = ();
+    # Number of records per page
+    int? 'limit = ();
+    # Starting point for pagination
+    int? offset = ();
+|};
+
 # Record to represent an organization.
 public type Organization record {|
     # Organization ID

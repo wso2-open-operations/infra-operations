@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import infra_portal.authorization;
 import infra_portal.database as db;
 import infra_portal.email;
@@ -154,7 +153,7 @@ service http:InterceptableService / on new http:Listener(8090) {
         if cacheError is error {
             log:printError("Error occurred while writing employees to the cache!", cacheError);
         }
-        
+
         return sortedEmployees;
     }
 
@@ -169,7 +168,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     # + offset - number of records to skip (optional)
     # + return - array of repository requests or error
     isolated resource function get repository\-requests(http:RequestContext ctx, string? memberEmail,
-        string? leadEmail, string? approvalState, int? 'limit, int? offset, string? repoName)
+            string? leadEmail, db:RepositoryRequestState? approvalState, int? 'limit, int? offset, string? repoName)
             returns RepositoryRequestsListResponse|http:Forbidden|http:InternalServerError {
 
         log:printDebug("Fetching repository requests");
@@ -192,8 +191,15 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
 
-        db:RepositoryRequest[]|error repoRequests = 
-            db:getRepositoryRequests(memberEmail, leadEmail, 'limit, offset, repoName);
+        db:RepositoryRequest[]|error repoRequests =
+            db:getRepositoryRequests({
+            memberEmail: memberEmail,
+            leadEmail: leadEmail,
+            approvalState: approvalState,
+            'limit: 'limit,
+            offset: offset,
+            repoName: repoName
+        });
 
         if repoRequests is error {
             string customError = "Error occurred while retrieving the repository requests!";
@@ -225,9 +231,9 @@ service http:InterceptableService / on new http:Listener(8090) {
     # + id - ID of the repository request
     # + return - repository request object or error
     isolated resource function get repository\-requests/[int id](http:RequestContext ctx)
-        returns RepositoryRequest|http:Forbidden|http:InternalServerError|http:NotFound {
+        returns db:RepositoryRequest|http:Forbidden|http:InternalServerError|http:NotFound {
 
-        log:printDebug(string`Fetching repository request with ID: ${id}`);
+        log:printDebug(string `Fetching repository request with ID: ${id}`);
 
         // interceptor set this value after validating the jwt.
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
@@ -267,9 +273,7 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
 
-        return {
-            repositoryRequest: repoRequest
-        };
+        return repoRequest;
     }
 
     # Create a new repository request.
@@ -322,7 +326,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     # + id - ID of the repository request
     # + updatedData - repository request object
     # + return - http:NoContent or error
-    resource function patch repository\-requests/[int id](http:RequestContext ctx, db:RepositoryRequestUpdate 
+    resource function patch repository\-requests/[int id](http:RequestContext ctx, db:RepositoryRequestUpdate
         updatedData) returns http:Ok|http:Forbidden|http:InternalServerError|http:NotFound {
 
         log:printDebug(string `Updating repository request with ID: ${id}`);
@@ -493,7 +497,7 @@ service http:InterceptableService / on new http:Listener(8090) {
 
         if !authorization:checkPermissions(
             [authorization:authorizedRoles.approver, authorization:authorizedRoles.admin], userInfo.groups) {
-                
+
             return <http:Forbidden>{
                 body: {
                     message: "Insufficient privileges!"
@@ -504,7 +508,7 @@ service http:InterceptableService / on new http:Listener(8090) {
         // Update repository request.
         db:RepositoryRequest|error? repoRequest = db:getRepositoryRequest(id);
         if repoRequest is error {
-            string customError = "Error while retriving repository request!";
+            string customError = "Error while retrieving repository request!";
             log:printError(customError, repoRequest);
             return <http:InternalServerError>{
                 body: {
@@ -540,7 +544,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-        
+
         // create the repository in github
         gh:gitHubOperationResult[] repoCreationResponse = createGitHubRepository(repoRequest);
         // check for errors while creating the repository
@@ -571,7 +575,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-        
+
         error? emailError = email:approveRepoRequestAlert(repoRequest, repoCreationResponse);
         if emailError is error {
             log:printError("Error while sending email!", emailError);
@@ -587,7 +591,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     # + return - http:Created or error
     isolated resource function post repository\-requests/[int id]/comments(http:RequestContext ctx, Comment comment)
         returns http:Created|http:InternalServerError|http:Forbidden|http:NotFound {
-        
+
         log:printDebug(string `Adding comment to repository request with ID: ${id}`);
 
         // interceptor set this value after validating the jwt.
@@ -618,7 +622,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-        
+
         db:RepositoryRequest|error? repoRequest = db:getRepositoryRequest(id);
         if repoRequest is error {
             string customError = "Error while retrieving repository request!";
@@ -648,7 +652,7 @@ service http:InterceptableService / on new http:Listener(8090) {
             ccList: repoRequest.ccList,
             id: repoRequest.id.toString()
         };
-        
+
         error? emailError = email:commentRepoRequestAlert(comment, emailDetails, id);
         if emailError is error {
             log:printError("Error while sending email!", emailError);
@@ -782,7 +786,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     }
 
     # Add a new organization to the database.
-    # Checks wheather the organization can be reached before adding to database.
+    # Checks whether the organization can be reached before adding to database.
     #
     # + newOrganization - new organization object
     # + return - http:Created or error
@@ -907,7 +911,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-        
+
         db:Organization|error currentOrganization = db:getOrganizationById(id);
         if currentOrganization is error {
             log:printError("Error while fetching organization: ", currentOrganization);
@@ -930,10 +934,10 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
         error? result = db:upsertOrganization(
-            updatedOrganization.organizationName, 
+            updatedOrganization.organizationName,
             updatedOrganization.organizationVisibility,
-            organizationPlan, 
-            updatedOrganization.enableIssues, 
+            organizationPlan,
+            updatedOrganization.enableIssues,
             updatedOrganization.teamIds
         );
 
@@ -998,7 +1002,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-        
+
         return http:OK;
     }
 
@@ -1047,7 +1051,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-        
+
         return <http:Ok>{
             body: "Organization deleted successfully"
         };
@@ -1135,13 +1139,13 @@ service http:InterceptableService / on new http:Listener(8090) {
     }
 
     # Update a topic.
-    # 
+    #
     # + id - Topic ID
     # + updatedTopic - Updated topic object
     # + return - http:Ok or error
     isolated resource function put topics/[int id](http:RequestContext ctx, Topic updatedTopic)
         returns http:Ok|http:Forbidden|http:InternalServerError {
-        
+
         log:printDebug(string `Updating topic with ID: ${id}`);
 
         // interceptor set this value after validating the jwt.
