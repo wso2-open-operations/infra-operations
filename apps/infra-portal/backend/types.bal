@@ -13,8 +13,13 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import infra_portal.database;
+
+public type SecurityDashboardLinks record {|
+    string deviceComplianceLink;
+    string softwareComplianceLink;
+    string securityScoreLink;
+|};
 
 # Represents the response structure for retrieving user information.
 public type UserInfoResponse record {|
@@ -119,5 +124,5 @@ public type Comment record {
     # Email of the author
     string authorEmail;
     # Comment text
-    string commentText; 
+    string commentText;
 };
