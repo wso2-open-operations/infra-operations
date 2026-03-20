@@ -4,14 +4,14 @@
 // Dissemination of any information or reproduction of any material contained
 // herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
 // You may not alter or remove any copyright or other notice from copies of this content.
-
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { APIService } from "@utils/apiService";
-import { AppConfig } from "@config/config";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { SnackMessage } from "@config/constant";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { AxiosResponse, HttpStatusCode } from "axios";
-import { State } from "@utils/types";
+
+import { State } from "@/types/types";
+import { AppConfig } from "@config/config";
+import { SnackMessage } from "@config/constant";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { APIService } from "@utils/apiService";
 
 export interface Lead {
   leadId: number;
@@ -32,24 +32,23 @@ const initialState: LeadsState = {
   errorMessage: null,
 };
 
-export interface AddLeadPayload{
+export interface AddLeadPayload {
   leadEmail: string;
   teamName: string;
 }
 
-export const fetchLeads = createAsyncThunk<
-  Lead[],
-  void,
-  { rejectValue: string }
->(
+export const fetchLeads = createAsyncThunk<Lead[], void, { rejectValue: string }>(
   "leads/fetchLeads",
   async (_, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     const newCancelTokenSource = APIService.updateCancelToken();
     try {
-      const response: AxiosResponse<Lead[]> = await APIService.getInstance().get(AppConfig.serviceUrls.leads, {
-        cancelToken: newCancelTokenSource.token,
-      });
+      const response: AxiosResponse<Lead[]> = await APIService.getInstance().get(
+        AppConfig.serviceUrls.leads,
+        {
+          cancelToken: newCancelTokenSource.token,
+        },
+      );
       return response.data;
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -63,32 +62,25 @@ export const fetchLeads = createAsyncThunk<
                 ? SnackMessage.error.fetchLeadsMessage
                 : String(error.response?.data?.message || "Unknown error"),
             type: "error",
-          })
+          }),
         );
         return rejectWithValue(error.response?.data || "Failed to fetch leads");
       }
       return rejectWithValue("An unexpected error occurred");
     }
-  }
+  },
 );
 
-export const addLead = createAsyncThunk<
-  void,
-  AddLeadPayload,
-  { rejectValue: string }
->(
+export const addLead = createAsyncThunk<void, AddLeadPayload, { rejectValue: string }>(
   "leads/addLeads",
   async (payload: AddLeadPayload, { dispatch, rejectWithValue }) => {
     try {
-      const response = await APIService.getInstance().post(
-        AppConfig.serviceUrls.leads,
-        payload
-      );
+      const response = await APIService.getInstance().post(AppConfig.serviceUrls.leads, payload);
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.addLeadMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -100,26 +92,22 @@ export const addLead = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
-export const updateLead = createAsyncThunk<
-  void,
-  Lead,
-  { rejectValue: string }
->(
+export const updateLead = createAsyncThunk<void, Lead, { rejectValue: string }>(
   "leads/updatelead",
   async (payload: Lead, { dispatch, rejectWithValue }) => {
     try {
       const response = await APIService.getInstance().put(
         `${AppConfig.serviceUrls.leads}/${payload.leadId}`,
-        payload
+        payload,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.updateLeadMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -131,25 +119,22 @@ export const updateLead = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
-export const deleteLead = createAsyncThunk<
-  string,
-  number,
-  { rejectValue: string }
->(
+export const deleteLead = createAsyncThunk<string, number, { rejectValue: string }>(
   "leads/deleteLead",
   async (leadId: number, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     try {
       const response = await APIService.getInstance().delete(
-        `${AppConfig.serviceUrls.leads}/${leadId}`);
+        `${AppConfig.serviceUrls.leads}/${leadId}`,
+      );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.deleteLeadMessage,
           type: "success",
-        })
+        }),
       );
 
       return response.data;
@@ -165,13 +150,11 @@ export const deleteLead = createAsyncThunk<
         enqueueSnackbarMessage({
           message: errorMessage,
           type: "error",
-        })
+        }),
       );
-      return rejectWithValue(
-        axios.isAxiosError(error) ? error.response?.data : errorMessage
-      );
+      return rejectWithValue(axios.isAxiosError(error) ? error.response?.data : errorMessage);
     }
-  }
+  },
 );
 
 const leadsSlice = createSlice({

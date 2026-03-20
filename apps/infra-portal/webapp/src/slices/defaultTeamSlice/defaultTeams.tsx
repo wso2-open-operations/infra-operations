@@ -7,11 +7,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { AxiosResponse, HttpStatusCode } from "axios";
 
+import { State } from "@/types/types";
 import { AppConfig } from "@config/config";
 import { SnackMessage } from "@config/constant";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 import { APIService } from "@utils/apiService";
-import { State } from "@utils/types";
 
 export interface DefaultTeam {
   teamId: number;
@@ -42,14 +42,17 @@ type CancellationStatus = { canceled: boolean };
 export const fetchDefaultTeams = createAsyncThunk<
   DefaultTeam[],
   void,
-  { rejectValue: CancellationStatus | string | unknown}
+  { rejectValue: CancellationStatus | string | unknown }
 >("defaultTeams/fetchDefaultTeams", async (_, { dispatch, rejectWithValue }) => {
   APIService.getCancelToken().cancel();
   const newCancelTokenSource = APIService.updateCancelToken();
   try {
-    const response: AxiosResponse<DefaultTeam[]> = await APIService.getInstance().get(AppConfig.serviceUrls.defaultTeams, {
-      cancelToken: newCancelTokenSource.token,
-    });
+    const response: AxiosResponse<DefaultTeam[]> = await APIService.getInstance().get(
+      AppConfig.serviceUrls.defaultTeams,
+      {
+        cancelToken: newCancelTokenSource.token,
+      },
+    );
     return response.data;
   } catch (error) {
     if (axios.isCancel(error)) {
@@ -102,11 +105,7 @@ export const addDefaultTeam = createAsyncThunk<
   },
 );
 
-export const updateDefaultTeam = createAsyncThunk<
-  void,
-  DefaultTeam,
-  { rejectValue: string }
->(
+export const updateDefaultTeam = createAsyncThunk<void, DefaultTeam, { rejectValue: string }>(
   "defaultTeams/updateTeam",
   async (payload: DefaultTeam, { dispatch, rejectWithValue }) => {
     try {
@@ -133,11 +132,7 @@ export const updateDefaultTeam = createAsyncThunk<
   },
 );
 
-export const deleteDefaultTeam = createAsyncThunk<
-  number,
-  number,
-  { rejectValue: string }
->(
+export const deleteDefaultTeam = createAsyncThunk<number, number, { rejectValue: string }>(
   "defaultTeams/deleteDefaultTeam",
   async (teamId: number, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
@@ -177,7 +172,6 @@ const isCancellation = (payload: unknown): payload is CancellationStatus => {
     typeof payload.canceled === "boolean"
   );
 };
-
 
 const defaultTeamsSlice = createSlice({
   name: "defaultTeams",

@@ -15,7 +15,11 @@
 // under the License.
 import { Box, Container, LinearProgress, Stack, Typography } from "@mui/material";
 
-import type { PreLoaderProps } from "@utils/types";
+interface PreLoaderProps {
+  message?: string;
+  hideLogo?: boolean;
+  isLoading?: boolean;
+}
 
 const PreLoader = (props: PreLoaderProps) => {
   return (

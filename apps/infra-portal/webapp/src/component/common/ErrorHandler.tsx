@@ -18,7 +18,10 @@ import { Box, Container } from "@mui/material";
 import ErrorSvg from "@assets/images/error.svg";
 import Wso2Logo from "@assets/images/wso2-logo.svg";
 import StateWithImage from "@component/ui/StateWithImage";
-import { ErrorHandlerProps } from "@root/src/utils/types";
+
+export interface ErrorHandlerProps {
+  message: string | null;
+}
 
 const ErrorHandler = (props: ErrorHandlerProps) => {
   return (

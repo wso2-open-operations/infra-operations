@@ -42,10 +42,6 @@ export const APP_NAME = window.config?.APP_NAME ?? "";
 export const APP_DOMAIN = window.config?.APP_DOMAIN ?? "";
 export const ServiceBaseUrl = window.config?.REACT_APP_BACKEND_BASE_URL ?? "";
 
-export const SecurityDashboard_Device_Compliance = "";
-export const SecurityDashboard_Software_Compliance = "";
-export const SecurityDashboard_Security_Score = "";
-
 export const AppConfig = {
   serviceUrls: {
     userInfo: ServiceBaseUrl + "/user-info",

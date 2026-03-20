@@ -4,14 +4,14 @@
 // Dissemination of any information or reproduction of any material contained
 // herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
 // You may not alter or remove any copyright or other notice from copies of this content.
-
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { APIService } from "@utils/apiService";
-import { AppConfig } from "@config/config";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { SnackMessage } from "@config/constant";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { AxiosResponse, HttpStatusCode } from "axios";
-import { State } from "@utils/types";
+
+import { State } from "@/types/types";
+import { AppConfig } from "@config/config";
+import { SnackMessage } from "@config/constant";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { APIService } from "@utils/apiService";
 
 interface TeamsState {
   state: State;
@@ -25,20 +25,19 @@ const initialState: TeamsState = {
   errorMessage: null,
 };
 
-export const fetchTeams = createAsyncThunk<
-  string[],
-  string,
-  { rejectValue: string }
->(
+export const fetchTeams = createAsyncThunk<string[], string, { rejectValue: string }>(
   "teams/fetchTeams",
   async (organization: string, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     const newCancelTokenSource = APIService.updateCancelToken();
     try {
-      const response: AxiosResponse<string[]> = await APIService.getInstance().get(AppConfig.serviceUrls.teams, {
-        params: { organization },
-        cancelToken: newCancelTokenSource.token,
-      });
+      const response: AxiosResponse<string[]> = await APIService.getInstance().get(
+        AppConfig.serviceUrls.teams,
+        {
+          params: { organization },
+          cancelToken: newCancelTokenSource.token,
+        },
+      );
       return response.data;
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -53,13 +52,13 @@ export const fetchTeams = createAsyncThunk<
                 ? SnackMessage.error.fetchTeamsMessage
                 : String(error.response?.data?.message || "Unknown error"),
             type: "error",
-          })
+          }),
         );
         return rejectWithValue(error.response?.data || "Failed to fetch teams");
       }
       return rejectWithValue("An unexpected error occurred");
     }
-  }
+  },
 );
 
 const teamsSlice = createSlice({
