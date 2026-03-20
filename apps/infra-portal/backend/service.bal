@@ -1564,4 +1564,33 @@ service http:InterceptableService / on new http:Listener(8090) {
             }
         };
     }
+
+    # Get security dashboard links from the configuration.
+    #
+    # + return - SecurityDashboardLinks object or error
+    isolated resource function get security\-dashboard\-links(http:RequestContext ctx)
+        returns SecurityDashboardLinks|http:Forbidden|http:InternalServerError {
+
+        log:printDebug("Fetching security dashboard links from the configuration");
+
+        // interceptor set this value after validating the jwt.
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
+                }
+            };
+        }
+
+        return securityDashboardLinks;
+    }
 }
