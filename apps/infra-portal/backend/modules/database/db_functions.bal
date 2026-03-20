@@ -27,17 +27,12 @@ public isolated function getRepositoryRequest(int id) returns RepositoryRequest|
 
 # Get all repository requests created by a user (member or lead).
 #
-# + memberEmail - Member email
-# + leadEmail - Lead email
-# + limit - Number of records to return
-# + offset - Number of records to skip
-# + repoName - Repository name
+# + filter - Filter object for repository requests
 # + return - Repository requests created by the user or error
-public isolated function getRepositoryRequests(string? memberEmail, string? leadEmail, int? 'limit, int? offset,
-    string? repoName) returns RepositoryRequest[]|error {
+public isolated function getRepositoryRequests(RepositoryRequestFilter filter) returns RepositoryRequest[]|error {
 
-    stream<RepositoryRequest, error?> resultStream = databaseClient->query(getRepositoryRequestsQuery(memberEmail,
-        leadEmail, 'limit, offset, repoName));
+    stream<RepositoryRequest, error?> resultStream = databaseClient->query(getRepositoryRequestsQuery(filter.memberEmail,
+        filter.leadEmail, filter.'limit, filter.offset, filter.repoName, filter.approvalState));
 
     return from RepositoryRequest repositoryRequest in resultStream
         select repositoryRequest;

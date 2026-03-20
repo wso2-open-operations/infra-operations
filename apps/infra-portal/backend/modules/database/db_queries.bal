@@ -64,9 +64,10 @@ isolated function getRepositoryRequestQuery(int id) returns sql:ParameterizedQue
 # + limit - Limit for the number of records to be returned
 # + offset - Offset for the number of records to be returned
 # + repoName - Repository name
+# + approvalState - Approval state of the repository request
 # + return - Repository requests created by the user or sql:Error
 isolated function getRepositoryRequestsQuery(string? memberEmail, string? leadEmail, int? 'limit, int? offset,
-    string? repoName) returns sql:ParameterizedQuery {
+    string? repoName, RepositoryRequestState? approvalState) returns sql:ParameterizedQuery {
         
     sql:ParameterizedQuery mainQuery = `
         SELECT 
@@ -112,6 +113,10 @@ isolated function getRepositoryRequestsQuery(string? memberEmail, string? leadEm
 
     if repoName is string {
         mainQuery = sql:queryConcat(mainQuery, ` AND repo_name LIKE ${"%" + repoName + "%"}`);
+    }
+
+    if approvalState is RepositoryRequestState {
+        mainQuery = sql:queryConcat(mainQuery, ` AND state = ${approvalState}`);
     }
 
     mainQuery = sql:queryConcat(mainQuery, ` ORDER BY timestamp DESC`);
