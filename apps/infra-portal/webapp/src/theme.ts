@@ -21,6 +21,11 @@ import designTokens from "./styles/design-tokens.json";
 // Shape of each color entry in design-tokens.json
 type ColorToken = { value: string };
 
+export enum ThemeMode {
+  Light = "light",
+  Dark = "dark",
+}
+
 // Helper function to remove 'ff' suffix from hex colors
 const cleanHexColor = (color: string): string => {
   if (color.endsWith("ff")) {

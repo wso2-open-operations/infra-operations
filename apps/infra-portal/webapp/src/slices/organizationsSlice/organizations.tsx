@@ -4,28 +4,28 @@
 // Dissemination of any information or reproduction of any material contained
 // herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
 // You may not alter or remove any copyright or other notice from copies of this content.
-
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { APIService } from "@utils/apiService";
-import { AppConfig } from "@config/config";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { SnackMessage } from "@config/constant";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { HttpStatusCode } from "axios";
-import { State } from "@utils/types";
+
+import { State } from "@/types/types";
+import { AppConfig } from "@config/config";
+import { SnackMessage } from "@config/constant";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { APIService } from "@utils/apiService";
 
 export interface Organization {
   organizationId: number;
   organizationName: string;
   organizationVisibility: string;
   organizationPlan: string;
-  enableIssues: boolean|number;
+  enableIssues: boolean | number;
   defaultTeams: string;
   teamIds: string;
 }
 
 interface OrganizationsState {
   state: State;
-  functionType? : string;
+  functionType?: string;
   organizations: Organization[] | null;
   errorMessage: string | null;
 }
@@ -55,11 +55,7 @@ export interface SyncOrganizationPayload {
   organizationName: string;
 }
 
-export const fetchOrganizations = createAsyncThunk<
-  Organization[],
-  void,
-  { rejectValue: string }
->(
+export const fetchOrganizations = createAsyncThunk<Organization[], void, { rejectValue: string }>(
   "organizations/fetchOrganizations",
   async (_, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
@@ -81,13 +77,13 @@ export const fetchOrganizations = createAsyncThunk<
                 ? SnackMessage.error.fetchOrganizationsMessage
                 : String(error.response?.data?.message || "Unknown error"),
             type: "error",
-          })
+          }),
         );
         return rejectWithValue(error.response?.data || "Failed to fetch organizations");
       }
       return rejectWithValue("An unexpected error occurred");
     }
-  }
+  },
 );
 
 export const fetchOrganizationById = createAsyncThunk<
@@ -96,13 +92,16 @@ export const fetchOrganizationById = createAsyncThunk<
   { rejectValue: string }
 >(
   "organizations/fetchOrganization",
-  async(organizationId: number, {dispatch, rejectWithValue}) => {
+  async (organizationId: number, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     const newCancelTokenSource = APIService.updateCancelToken();
-    try{
-      const response = await APIService.getInstance().get(AppConfig.serviceUrls.organizations + `/${organizationId}`, {
-        cancelToken: newCancelTokenSource.token,
-      });
+    try {
+      const response = await APIService.getInstance().get(
+        AppConfig.serviceUrls.organizations + `/${organizationId}`,
+        {
+          cancelToken: newCancelTokenSource.token,
+        },
+      );
       return response.data;
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -116,14 +115,14 @@ export const fetchOrganizationById = createAsyncThunk<
                 ? SnackMessage.error.fetchOrganizationMessage
                 : String(error.response?.data?.message || "Unknown error"),
             type: "error",
-          })
+          }),
         );
         return rejectWithValue(error.response?.data || "Failed to fetch organization");
       }
       return rejectWithValue("An unexpected error occurred");
     }
-  }
-)
+  },
+);
 
 export const addOrganization = createAsyncThunk<
   void,
@@ -135,13 +134,13 @@ export const addOrganization = createAsyncThunk<
     try {
       const response = await APIService.getInstance().post(
         AppConfig.serviceUrls.organizations,
-        payload
+        payload,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.addOrganizationMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -153,7 +152,7 @@ export const addOrganization = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
 export const updateOrganization = createAsyncThunk<
@@ -166,13 +165,13 @@ export const updateOrganization = createAsyncThunk<
     try {
       const response = await APIService.getInstance().put(
         `${AppConfig.serviceUrls.organizations}/${payload.organizationId}`,
-        payload
+        payload,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.updateOrganizationMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -184,7 +183,7 @@ export const updateOrganization = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
 export const syncOrganization = createAsyncThunk<
@@ -196,13 +195,13 @@ export const syncOrganization = createAsyncThunk<
   async (payload: SyncOrganizationPayload, { dispatch, rejectWithValue }) => {
     try {
       const response = await APIService.getInstance().patch(
-        `${AppConfig.serviceUrls.organizations}/${payload.organizationName}/sync-plan`
+        `${AppConfig.serviceUrls.organizations}/${payload.organizationName}/sync-plan`,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.syncOrganizationMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -214,25 +213,22 @@ export const syncOrganization = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
-export const deleteOrganization = createAsyncThunk<
-  void,
-  number,
-  { rejectValue: string }
->(
+export const deleteOrganization = createAsyncThunk<void, number, { rejectValue: string }>(
   "organizations/deleteOrganization",
   async (organizationId: number, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     try {
       const response = await APIService.getInstance().delete(
-        `${AppConfig.serviceUrls.organizations}/${organizationId}`);
+        `${AppConfig.serviceUrls.organizations}/${organizationId}`,
+      );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.deleteOrganizationMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -247,13 +243,11 @@ export const deleteOrganization = createAsyncThunk<
         enqueueSnackbarMessage({
           message: errorMessage,
           type: "error",
-        })
+        }),
       );
-      return rejectWithValue(
-        axios.isAxiosError(error) ? error.response?.data : errorMessage
-      );
+      return rejectWithValue(axios.isAxiosError(error) ? error.response?.data : errorMessage);
     }
-  }
+  },
 );
 
 const organizationsSlice = createSlice({

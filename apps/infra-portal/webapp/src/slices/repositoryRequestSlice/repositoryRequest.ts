@@ -4,15 +4,15 @@
 // Dissemination of any information or reproduction of any material contained
 // herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
 // You may not alter or remove any copyright or other notice from copies of this content.
-
 import { createSlice } from "@reduxjs/toolkit";
-import { State } from "@utils/types";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { APIService } from "@utils/apiService";
-import { AppConfig } from "@config/config";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { SnackMessage } from "@config/constant";
 import axios, { AxiosResponse, HttpStatusCode } from "axios";
+
+import { State } from "@/types/types";
+import { AppConfig } from "@config/config";
+import { SnackMessage } from "@config/constant";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { APIService } from "@utils/apiService";
 
 interface RepositoryRequestState {
   state: State;
@@ -119,14 +119,17 @@ export const fetchRepositoryRequests = createAsyncThunk<
   { rejectValue: string }
 >(
   "repositoryRequest/fetchRepositoryRequests",
-  async (filterPayload : RepositoryRequestFilter, { dispatch, rejectWithValue }) => {
+  async (filterPayload: RepositoryRequestFilter, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     const newCancelTokenSource = APIService.updateCancelToken();
     try {
-      const response: AxiosResponse<RepositoryRequests> = await APIService.getInstance().get(AppConfig.serviceUrls.repositoryRequests, {
-        cancelToken: newCancelTokenSource.token,
-        params: { ...filterPayload },
-      });
+      const response: AxiosResponse<RepositoryRequests> = await APIService.getInstance().get(
+        AppConfig.serviceUrls.repositoryRequests,
+        {
+          cancelToken: newCancelTokenSource.token,
+          params: { ...filterPayload },
+        },
+      );
       return response.data;
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -140,13 +143,13 @@ export const fetchRepositoryRequests = createAsyncThunk<
                 ? SnackMessage.error.fetchRepositoryRequestsMessage
                 : String(error.response?.data?.message || "Unknown error"),
             type: "error",
-          })
+          }),
         );
         return rejectWithValue(error.response?.data || "Failed to fetch repository requests");
       }
       return rejectWithValue("An unexpected error occurred");
     }
-  }
+  },
 );
 
 export const addRepositoryRequests = createAsyncThunk<
@@ -159,13 +162,13 @@ export const addRepositoryRequests = createAsyncThunk<
     try {
       const response = await APIService.getInstance().post(
         AppConfig.serviceUrls.repositoryRequests,
-        payload
+        payload,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.addRepositoryRequests,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -177,25 +180,21 @@ export const addRepositoryRequests = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
-export const rejectRepositoryRequest = createAsyncThunk<
-  void,
-  number,
-  { rejectValue: string }
->(
+export const rejectRepositoryRequest = createAsyncThunk<void, number, { rejectValue: string }>(
   "repositoryRequest/rejectRepositoryRequest",
   async (id: number, { dispatch, rejectWithValue }) => {
     try {
       const response = await APIService.getInstance().patch(
-        `${AppConfig.serviceUrls.repositoryRequests}/${id}/reject`
+        `${AppConfig.serviceUrls.repositoryRequests}/${id}/reject`,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.rejectRepositoryRequest,
           type: "success",
-        })
+        }),
       );
 
       return response.data;
@@ -211,13 +210,11 @@ export const rejectRepositoryRequest = createAsyncThunk<
         enqueueSnackbarMessage({
           message: errorMessage,
           type: "error",
-        })
+        }),
       );
-      return rejectWithValue(
-        axios.isAxiosError(error) ? error.response?.data : errorMessage
-      );
+      return rejectWithValue(axios.isAxiosError(error) ? error.response?.data : errorMessage);
     }
-  }
+  },
 );
 
 export const updateRepositoryRequest = createAsyncThunk<
@@ -230,13 +227,13 @@ export const updateRepositoryRequest = createAsyncThunk<
     try {
       const response = await APIService.getInstance().patch(
         `${AppConfig.serviceUrls.repositoryRequests}/${payload.id}`,
-        payload
+        payload,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.updateRepositoryRequest,
           type: "success",
-        })
+        }),
       );
 
       return response.data;
@@ -252,31 +249,25 @@ export const updateRepositoryRequest = createAsyncThunk<
         enqueueSnackbarMessage({
           message: errorMessage,
           type: "error",
-        })
+        }),
       );
-      return rejectWithValue(
-        axios.isAxiosError(error) ? error.response?.data : errorMessage
-      );
+      return rejectWithValue(axios.isAxiosError(error) ? error.response?.data : errorMessage);
     }
-  }
+  },
 );
 
-export const approveRepositoryRequest = createAsyncThunk<
-  void,
-  number,
-  { rejectValue: string }
->(
+export const approveRepositoryRequest = createAsyncThunk<void, number, { rejectValue: string }>(
   "repositoryRequest/approveRepositoryRequest",
   async (id: number, { dispatch, rejectWithValue }) => {
     try {
       const response = await APIService.getInstance().patch(
-        `${AppConfig.serviceUrls.repositoryRequests}/${id}/approve`
+        `${AppConfig.serviceUrls.repositoryRequests}/${id}/approve`,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.approveRepositoryRequest,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -291,13 +282,11 @@ export const approveRepositoryRequest = createAsyncThunk<
         enqueueSnackbarMessage({
           message: errorMessage,
           type: "error",
-        })
+        }),
       );
-      return rejectWithValue(
-        axios.isAxiosError(error) ? error.response?.data : errorMessage
-      );
+      return rejectWithValue(axios.isAxiosError(error) ? error.response?.data : errorMessage);
     }
-  }
+  },
 );
 
 const RepositoryRequestSlice = createSlice({

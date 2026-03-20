@@ -4,14 +4,14 @@
 // Dissemination of any information or reproduction of any material contained
 // herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
 // You may not alter or remove any copyright or other notice from copies of this content.
-
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { APIService } from "@utils/apiService";
-import { AppConfig } from "@config/config";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { SnackMessage } from "@config/constant";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { AxiosResponse, HttpStatusCode } from "axios";
-import { State } from "@utils/types";
+
+import { State } from "@/types/types";
+import { AppConfig } from "@config/config";
+import { SnackMessage } from "@config/constant";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { APIService } from "@utils/apiService";
 
 export interface Comment {
   commentId: number;
@@ -41,19 +41,18 @@ export interface AddCommentPayload {
   commentText: string;
 }
 
-export const fetchComments = createAsyncThunk<
-  Comment[],
-  number,
-  { rejectValue: string }
->(
+export const fetchComments = createAsyncThunk<Comment[], number, { rejectValue: string }>(
   "comments/fetchComments",
   async (requestId: number, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     const newCancelTokenSource = APIService.updateCancelToken();
     try {
-      const response: AxiosResponse<Comment[]> = await APIService.getInstance().get(AppConfig.serviceUrls.comments(requestId), {
-        cancelToken: newCancelTokenSource.token,
-      });
+      const response: AxiosResponse<Comment[]> = await APIService.getInstance().get(
+        AppConfig.serviceUrls.comments(requestId),
+        {
+          cancelToken: newCancelTokenSource.token,
+        },
+      );
       return response.data;
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -67,32 +66,28 @@ export const fetchComments = createAsyncThunk<
                 ? SnackMessage.error.fetchCommentsMessage
                 : String(error.response?.data?.message || "Unknown error"),
             type: "error",
-          })
+          }),
         );
         return rejectWithValue(error.response?.data || "Failed to fetch comments");
       }
       return rejectWithValue("An unexpected error occurred");
     }
-  }
+  },
 );
 
-export const addComments = createAsyncThunk<
-  Comment,
-  AddCommentPayload,
-  { rejectValue: string }
->(
+export const addComments = createAsyncThunk<Comment, AddCommentPayload, { rejectValue: string }>(
   "comments/addComments",
   async (payload: AddCommentPayload, { dispatch, rejectWithValue }) => {
     try {
       const response: AxiosResponse<Comment> = await APIService.getInstance().post(
         AppConfig.serviceUrls.comments(payload.requestId),
-        payload
+        payload,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.addCommentMessage,
           type: "success",
-        })
+        }),
       );
       return response.data; // expect created comment
     } catch (error) {
@@ -104,7 +99,7 @@ export const addComments = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
 const commentsSlice = createSlice({
@@ -145,14 +140,12 @@ const commentsSlice = createSlice({
         state.state = State.success;
         state.functionType = undefined;
         state.errorMessage = null;
-      }
-      )
+      })
       .addCase(addComments.rejected, (state) => {
         state.state = State.failed;
         state.functionType = undefined;
         state.errorMessage = "Failed to add comment";
-      }
-      );
+      });
   },
 });
 

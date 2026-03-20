@@ -23,9 +23,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { APP_NAME, AsgardeoConfig } from "@config/config";
 import { AppAuthProvider } from "@context";
-import { themeSettings } from "@root/src/theme";
+import { ThemeMode, themeSettings } from "@root/src/theme";
 import { store } from "@slices/store";
-import { ThemeMode } from "@utils/types";
 
 import { ColorModeContext } from "./context/color-mode/ColorModeContext";
 import "./index.css";

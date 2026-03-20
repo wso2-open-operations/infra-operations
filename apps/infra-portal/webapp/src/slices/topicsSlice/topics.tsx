@@ -4,14 +4,14 @@
 // Dissemination of any information or reproduction of any material contained
 // herein in any form is strictly forbidden, unless permitted by WSO2 expressly.
 // You may not alter or remove any copyright or other notice from copies of this content.
-
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { APIService } from "@utils/apiService";
-import { AppConfig } from "@config/config";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { SnackMessage } from "@config/constant";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { HttpStatusCode } from "axios";
-import { State } from "@utils/types";
+
+import { State } from "@/types/types";
+import { AppConfig } from "@config/config";
+import { SnackMessage } from "@config/constant";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { APIService } from "@utils/apiService";
 
 export interface Topic {
   topicId: number;
@@ -31,15 +31,11 @@ const initialState: TopicsState = {
   errorMessage: null,
 };
 
-export interface AddTopicPayload{
+export interface AddTopicPayload {
   topicName: string;
 }
 
-export const fetchTopics = createAsyncThunk<
-  Topic[],
-  void,
-  { rejectValue: string }
->(
+export const fetchTopics = createAsyncThunk<Topic[], void, { rejectValue: string }>(
   "topics/fetchTopics",
   async (_, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
@@ -61,32 +57,25 @@ export const fetchTopics = createAsyncThunk<
                 ? SnackMessage.error.fetchTopicsMessage
                 : String(error.response?.data?.message || "Unknown error"),
             type: "error",
-          })
+          }),
         );
         return rejectWithValue(error.response?.data || "Failed to fetch topics");
       }
       return rejectWithValue("An unexpected error occurred");
     }
-  }
+  },
 );
 
-export const addTopic = createAsyncThunk<
-  void,
-  AddTopicPayload,
-  { rejectValue: string }
->(
+export const addTopic = createAsyncThunk<void, AddTopicPayload, { rejectValue: string }>(
   "topics/addTopics",
   async (payload: AddTopicPayload, { dispatch, rejectWithValue }) => {
     try {
-      const response = await APIService.getInstance().post(
-        AppConfig.serviceUrls.topics,
-        payload
-      );
+      const response = await APIService.getInstance().post(AppConfig.serviceUrls.topics, payload);
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.addTopicMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -98,26 +87,22 @@ export const addTopic = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
-export const updateTopic = createAsyncThunk<
-  void,
-  Topic,
-  { rejectValue: string }
->(
+export const updateTopic = createAsyncThunk<void, Topic, { rejectValue: string }>(
   "topics/updateTopic",
   async (payload: Topic, { dispatch, rejectWithValue }) => {
     try {
       const response = await APIService.getInstance().put(
         `${AppConfig.serviceUrls.topics}/${payload.topicId}`,
-        payload
+        payload,
       );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.updateTopicMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -129,25 +114,22 @@ export const updateTopic = createAsyncThunk<
       dispatch(enqueueSnackbarMessage({ message, type: "error" }));
       return rejectWithValue(message);
     }
-  }
+  },
 );
 
-export const deleteTopic = createAsyncThunk<
-  void,
-  number,
-  { rejectValue: string }
->(
+export const deleteTopic = createAsyncThunk<void, number, { rejectValue: string }>(
   "topics/deleteTopic",
   async (topicId: number, { dispatch, rejectWithValue }) => {
     APIService.getCancelToken().cancel();
     try {
-      const response = await APIService.getInstance()
-        .delete(`${AppConfig.serviceUrls.topics}/${topicId}`);
+      const response = await APIService.getInstance().delete(
+        `${AppConfig.serviceUrls.topics}/${topicId}`,
+      );
       dispatch(
         enqueueSnackbarMessage({
           message: SnackMessage.success.deleteTopicMessage,
           type: "success",
-        })
+        }),
       );
       return response.data;
     } catch (error) {
@@ -162,13 +144,11 @@ export const deleteTopic = createAsyncThunk<
         enqueueSnackbarMessage({
           message: errorMessage,
           type: "error",
-        })
+        }),
       );
-      return rejectWithValue(
-        axios.isAxiosError(error) ? error.response?.data : errorMessage
-      );
+      return rejectWithValue(axios.isAxiosError(error) ? error.response?.data : errorMessage);
     }
-  }
+  },
 );
 
 const topicsSlice = createSlice({
