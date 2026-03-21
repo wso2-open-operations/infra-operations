@@ -53,6 +53,8 @@ export const AppConfig = {
     organizations: ServiceBaseUrl + "/organizations",
     comments: (requestId: number) => `${ServiceBaseUrl}/repository-requests/${requestId}/comments`,
     defaultTeams: ServiceBaseUrl + "/default-teams",
+
+    securityDashboardLinks: ServiceBaseUrl + "/security-dashboard-links",
   },
   markdownUrls: {
     overview: "/doc/userGuide/Overview.md",

@@ -18,11 +18,10 @@ import { Box, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { ChevronRight } from "lucide-react";
 
-import {
-  SecurityDashboard_Device_Compliance,
-  SecurityDashboard_Security_Score,
-  SecurityDashboard_Software_Compliance,
-} from "@config/config";
+import { useEffect } from "react";
+
+import { fetchSecurityDashboardLinks } from "@slices/securityDashboardLinksSlice/securityDashboardLinks";
+import { useAppDispatch, useAppSelector } from "@slices/store";
 
 import ServiceRow from "./ServiceRow";
 
@@ -42,13 +41,18 @@ function SecurityIcon({ color }: { color: string }) {
 
 export default function SecurityDashboardCard() {
   const theme = useTheme();
-
+  const dispatch = useAppDispatch();
+  const securityDashboardLinks = useAppSelector((state) => state.securityDashboardLinks.links);
   const accent = theme.palette.primary.main;
   const greenColor = theme.palette.success.main;
   const greenBg = alpha(greenColor, 0.1);
   const amberColor = theme.palette.warning.main;
   const amberBg = alpha(amberColor, 0.1);
   const blueColor = theme.palette.info.main;
+
+  useEffect(() => {
+    dispatch(fetchSecurityDashboardLinks());
+  }, [dispatch]);
 
   return (
     <Box
@@ -65,7 +69,7 @@ export default function SecurityDashboardCard() {
       {/* Header */}
       <Box
         onClick={() =>
-          window.open(SecurityDashboard_Device_Compliance, "_blank", "noopener noreferrer")
+          window.open(securityDashboardLinks.deviceComplianceLink, "_blank", "noopener noreferrer")
         }
         sx={{
           display: "flex",
@@ -115,7 +119,11 @@ export default function SecurityDashboardCard() {
           label="Device compliance overview"
           tag={{ tagName: "all", tagBackground: greenBg, tagColor: greenColor }}
           onClick={() =>
-            window.open(SecurityDashboard_Device_Compliance, "_blank", "noopener noreferrer")
+            window.open(
+              securityDashboardLinks.deviceComplianceLink,
+              "_blank",
+              "noopener noreferrer",
+            )
           }
         />
         <ServiceRow
@@ -123,7 +131,11 @@ export default function SecurityDashboardCard() {
           label="Software compliance overview"
           tag={{ tagName: "all", tagBackground: greenBg, tagColor: greenColor }}
           onClick={() =>
-            window.open(SecurityDashboard_Software_Compliance, "_blank", "noopener noreferrer")
+            window.open(
+              securityDashboardLinks.softwareComplianceLink,
+              "_blank",
+              "noopener noreferrer",
+            )
           }
         />
 
@@ -132,7 +144,7 @@ export default function SecurityDashboardCard() {
           label="Security score overview"
           tag={{ tagName: "all", tagBackground: amberBg, tagColor: amberColor }}
           onClick={() =>
-            window.open(SecurityDashboard_Security_Score, "_blank", "noopener noreferrer")
+            window.open(securityDashboardLinks.securityScoreLink, "_blank", "noopener noreferrer")
           }
           isLast
         />

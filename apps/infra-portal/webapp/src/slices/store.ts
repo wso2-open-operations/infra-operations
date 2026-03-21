@@ -25,6 +25,7 @@ import employeeReducer from "@slices/employeeSlice/employee";
 import leadsReducer from "@slices/leadsSlice/leads";
 import organizationsReducer from "@slices/organizationsSlice/organizations";
 import repositoryRequestReducer from "@slices/repositoryRequestSlice/repositoryRequest";
+import securityDashboardLinksReducer from "@slices/securityDashboardLinksSlice/securityDashboardLinks";
 import teamsReducer from "@slices/teamsSlice/teams";
 import topicsReducer from "@slices/topicsSlice/topics";
 import userReducer from "@slices/userSlice/user";
@@ -44,6 +45,7 @@ export const store = configureStore({
     organizations: organizationsReducer,
     comments: commentsReducer,
     defaultTeams: defaultTeamsReducer,
+    securityDashboardLinks: securityDashboardLinksReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
 });
