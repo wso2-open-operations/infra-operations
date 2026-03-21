@@ -96,6 +96,7 @@ export const SnackMessage = {
     deleteDefaultTeamMessage: "Unable to delete the Default Team",
 
     fetchUserGuideMessage: "Unable to retrieve User Guide documents",
+    fetchSecurityDashboardLinksMessage: "Unable to retrieve Security Dashboard links",
   },
   warning: {},
 };
