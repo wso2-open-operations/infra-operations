@@ -51,7 +51,11 @@ export default function GitHubServiceCard({ canReview, onNavigate }: GitHubServi
       }}
     >
       {/* Header */}
-      <ServiceCardHeader title="GitHub" onNavigate={onNavigate} icon={<GitHub />} />
+      <ServiceCardHeader
+        title="GitHub"
+        onNavigate={() => onNavigate("/github")}
+        icon={<GitHub />}
+      />
 
       {/* Service rows */}
       <Box>
@@ -59,20 +63,20 @@ export default function GitHubServiceCard({ canReview, onNavigate }: GitHubServi
           dotColor={accent}
           label="Repository Requests"
           tag={{ tagName: "all", tagBackground: greenBg, tagColor: greenColor }}
-          onClick={() => onNavigate("/repository-requests")}
+          onClick={() => onNavigate("/github/repository-requests")}
         />
         <ServiceRow
           dotColor={blueColor}
           label="Repository Access Requests"
           tag={{ tagName: "all", tagBackground: greenBg, tagColor: greenColor }}
-          onClick={() => onNavigate("/repository-access-requests")}
+          onClick={() => onNavigate("/github/repository-access-requests")}
         />
         {canReview && (
           <ServiceRow
             dotColor={amberColor}
             label="Review Repository Requests"
             tag={{ tagName: "approver", tagBackground: amberBg, tagColor: amberColor }}
-            onClick={() => onNavigate("/review-repository-requests")}
+            onClick={() => onNavigate("/github/review-repository-requests")}
             isLast
           />
         )}
