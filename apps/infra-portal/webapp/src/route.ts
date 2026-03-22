@@ -13,7 +13,8 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { HomeIcon } from "lucide-react";
+import { GitHub } from "@mui/icons-material";
+import { HomeIcon, Shield, ShieldUser } from "lucide-react";
 import { CircleQuestionMark } from "lucide-react";
 import type { RouteObject } from "react-router-dom";
 
@@ -31,59 +32,74 @@ export const routes: RouteObjectWithRole[] = [
     text: "Home",
     icon: React.createElement(HomeIcon),
     element: React.createElement(View.home),
-    allowRoles: [Role.ADMIN, Role.EMPLOYEE],
+    allowRoles: [Role.EMPLOYEE],
   },
   {
     path: "/help",
     text: "Help & Support",
     icon: React.createElement(CircleQuestionMark),
     element: React.createElement(View.help),
-    allowRoles: [Role.ADMIN, Role.EMPLOYEE],
+    allowRoles: [Role.EMPLOYEE],
     bottomNav: true,
   },
   {
-    path: "/page",
-    text: "Page 1",
-    icon: React.createElement(CircleQuestionMark),
+    path: "/security-dashboard",
+    text: "Security Dashboard",
+    icon: React.createElement(Shield),
+    element: React.createElement(View.securityDashboard),
     allowRoles: [Role.ADMIN, Role.EMPLOYEE],
-    children: [
-      {
-        path: "nested-page",
-        text: "Nested Page",
-        icon: React.createElement(CircleQuestionMark),
-        element: React.createElement(View.nestedPage),
-        allowRoles: [Role.ADMIN, Role.EMPLOYEE],
-      },
-      {
-        path: "nested-page-2",
-        text: "Nested Page 2",
-        icon: React.createElement(CircleQuestionMark),
-        element: React.createElement(View.nestedPage),
-        allowRoles: [Role.ADMIN, Role.EMPLOYEE],
-      },
-    ],
   },
 
   {
-    path: "/page-two",
-    text: "Page 2",
-    icon: React.createElement(CircleQuestionMark),
-    element: React.createElement(View.pageTwo),
-    allowRoles: [Role.ADMIN, Role.EMPLOYEE],
+    path: "/github",
+    text: "Github",
+    icon: React.createElement(GitHub),
+    element: React.createElement(View.github),
+    allowRoles: [Role.EMPLOYEE],
     children: [
       {
-        path: "nested-page",
-        text: "Nested Page",
+        path: "repository-requests",
+        text: "Repository Requests",
         icon: React.createElement(CircleQuestionMark),
         element: React.createElement(View.nestedPage),
-        allowRoles: [Role.ADMIN, Role.EMPLOYEE],
+        allowRoles: [Role.EMPLOYEE],
       },
       {
-        path: "nested-page-2",
-        text: "Nested Page 2",
+        path: "repository-access-requests",
+        text: "Repository Access Requests",
         icon: React.createElement(CircleQuestionMark),
         element: React.createElement(View.nestedPage),
-        allowRoles: [Role.ADMIN, Role.EMPLOYEE],
+        allowRoles: [Role.EMPLOYEE],
+      },
+      {
+        path: "my-requests",
+        text: "My Requests",
+        icon: React.createElement(CircleQuestionMark),
+        element: React.createElement(View.nestedPage),
+        allowRoles: [Role.EMPLOYEE],
+      },
+      {
+        path: "review-repository-requests",
+        text: "Review Repository Requests",
+        icon: React.createElement(CircleQuestionMark),
+        element: React.createElement(View.nestedPage),
+        allowRoles: [Role.ADMIN, Role.APPROVER],
+      },
+    ],
+  },
+  {
+    path: "admin",
+    text: "Admin",
+    icon: React.createElement(ShieldUser),
+    element: React.createElement(View.nestedPage),
+    allowRoles: [Role.ADMIN],
+    children: [
+      {
+        path: "github-settings",
+        text: "GitHub Settings",
+        icon: React.createElement(CircleQuestionMark),
+        element: React.createElement(View.nestedPage),
+        allowRoles: [Role.ADMIN],
       },
     ],
   },
