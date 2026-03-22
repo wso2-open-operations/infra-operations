@@ -1,7 +1,7 @@
 import { GitHub } from "@mui/icons-material";
 import { Box, Grid, alpha, useTheme } from "@mui/material";
 import { BookKey, BookMarked, Settings } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Outlet, useMatch, useNavigate } from "react-router-dom";
 
 import SectionLabel from "@root/src/component/ui/SectionLabel";
 import { Role } from "@root/src/slices/authSlice/auth";
@@ -12,6 +12,7 @@ import ServiceCard, { ServiceCardProps } from "./ServiceCard/Service";
 export default function Github() {
   const navigate = useNavigate();
   const theme = useTheme();
+  const isIndex = useMatch({ path: "/github", end: true });
 
   const accent = theme.palette.primary.main;
   const accentBg = alpha(accent, 0.1);
@@ -45,7 +46,7 @@ export default function Github() {
             tagBackground: blueBg,
             tagColor: blueColor,
           },
-          onClick: () => navigate("/repository-requests"),
+          onClick: () => navigate("repository-requests"),
           roles: [Role.EMPLOYEE],
         },
         {
@@ -56,7 +57,7 @@ export default function Github() {
             tagBackground: blueBg,
             tagColor: blueColor,
           },
-          onClick: () => navigate("/repository-requests/my-requests"),
+          onClick: () => navigate("repository-requests/my-requests"),
           roles: [Role.EMPLOYEE],
         },
         {
@@ -67,7 +68,7 @@ export default function Github() {
             tagBackground: amberBg,
             tagColor: amberColor,
           },
-          onClick: () => navigate("/review-repository-requests"),
+          onClick: () => navigate("review-repository-requests"),
           roles: [Role.APPROVER],
         },
       ],
@@ -94,7 +95,7 @@ export default function Github() {
             tagBackground: blueBg,
             tagColor: blueColor,
           },
-          onClick: () => navigate("/repository-access-requests"),
+          onClick: () => navigate("repository-access-requests"),
           roles: [Role.EMPLOYEE],
         },
         {
@@ -105,7 +106,7 @@ export default function Github() {
             tagBackground: blueBg,
             tagColor: blueColor,
           },
-          onClick: () => navigate("/repository-access-requests/my-requests"),
+          onClick: () => navigate("repository-access-requests/my-requests"),
           roles: [Role.EMPLOYEE],
         },
         {
@@ -116,7 +117,7 @@ export default function Github() {
             tagBackground: amberBg,
             tagColor: amberColor,
           },
-          onClick: () => navigate("/review-repository-access-requests"),
+          onClick: () => navigate("review-repository-access-requests"),
           roles: [Role.APPROVER],
         },
       ],
@@ -163,14 +164,20 @@ export default function Github() {
       />
 
       {/* services */}
-      <SectionLabel>Services</SectionLabel>
-      <Grid container spacing={1.5} mb={4}>
-        {services.map((service, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-            <ServiceCard {...service} />
+      {isIndex ? (
+        <>
+          <SectionLabel>Services</SectionLabel>
+          <Grid container spacing={1.5} mb={4}>
+            {services.map((service, index) => (
+              <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
+                <ServiceCard {...service} />
+              </Grid>
+            ))}
           </Grid>
-        ))}
-      </Grid>
+        </>
+      ) : (
+        <Outlet />
+      )}
     </Box>
   );
 }
