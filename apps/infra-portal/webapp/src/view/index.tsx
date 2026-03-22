@@ -18,11 +18,13 @@ import { lazy } from "react";
 const help = lazy(() => import("@view/help/help"));
 const nestedPage = lazy(() => import("@view/nested-page/NestedPage"));
 const github = lazy(() => import("@view/github/Github"));
+const securityDashboard = lazy(() => import("@view/security-dashboard/SecurityDashboard"));
 const home = lazy(() => import("@view/home/Home"));
 
 export const View = {
   help,
   nestedPage,
   github,
+  securityDashboard,
   home,
 };
