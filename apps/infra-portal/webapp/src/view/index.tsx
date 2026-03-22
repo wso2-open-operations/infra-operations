@@ -17,12 +17,12 @@ import { lazy } from "react";
 
 const help = lazy(() => import("@view/help/help"));
 const nestedPage = lazy(() => import("@view/nested-page/NestedPage"));
-const pageTwo = lazy(() => import("@view/page-two/PageTwo"));
+const github = lazy(() => import("@view/github/Github"));
 const home = lazy(() => import("@view/home/Home"));
 
 export const View = {
   help,
   nestedPage,
-  pageTwo,
+  github,
   home,
 };
