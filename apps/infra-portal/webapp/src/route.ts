@@ -126,6 +126,7 @@ export const getActiveRouteDetails = (roles: string[]): RouteDetail[] => {
       routesObj.push({
         ...routeObj,
         path: routeObj.path ?? "",
+        children: getActiveRoutesV2(routeObj.children, roles),
       });
     }
   });
