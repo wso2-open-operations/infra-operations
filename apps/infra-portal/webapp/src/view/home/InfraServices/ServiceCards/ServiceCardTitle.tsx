@@ -9,13 +9,13 @@ export default function ServiceCardHeader({
   icon,
 }: {
   title: string;
-  onNavigate: (path: string) => void;
+  onNavigate: () => void;
   icon: React.ReactNode;
 }) {
   const theme = useTheme();
   return (
     <Box
-      onClick={() => onNavigate("/github")}
+      onClick={onNavigate}
       sx={{
         display: "flex",
         alignItems: "center",
