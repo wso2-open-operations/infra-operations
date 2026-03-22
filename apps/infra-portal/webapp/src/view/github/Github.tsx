@@ -6,8 +6,8 @@ import { Outlet, useMatch, useNavigate } from "react-router-dom";
 import SectionLabel from "@root/src/component/ui/SectionLabel";
 import { Role } from "@root/src/slices/authSlice/auth";
 
-import Heading from "./Heading/Heading";
-import ServiceCard, { ServiceCardProps } from "./ServiceCard/Service";
+import Heading from "../../component/ui/Heading";
+import ServiceCard, { ServiceCardProps } from "../../component/ui/Service";
 
 export default function Github() {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ export default function Github() {
             tagBackground: blueBg,
             tagColor: blueColor,
           },
-          onClick: () => navigate("repository-requests/my-requests"),
+          onClick: () => navigate("my-requests"),
           roles: [Role.EMPLOYEE],
         },
         {
@@ -106,7 +106,7 @@ export default function Github() {
             tagBackground: blueBg,
             tagColor: blueColor,
           },
-          onClick: () => navigate("repository-access-requests/my-requests"),
+          onClick: () => navigate("my-requests"),
           roles: [Role.EMPLOYEE],
         },
         {
@@ -117,7 +117,7 @@ export default function Github() {
             tagBackground: amberBg,
             tagColor: amberColor,
           },
-          onClick: () => navigate("review-repository-access-requests"),
+          onClick: () => navigate("review-repository-requests"),
           roles: [Role.APPROVER],
         },
       ],
