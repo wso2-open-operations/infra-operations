@@ -14,29 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 import { GitHub } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { ChevronRight } from "lucide-react";
 
+import ServiceCardHeader from "./ServiceCardTitle";
 import ServiceRow from "./ServiceRow";
 
-export interface GitHubServiceCardProps {
+interface GitHubServiceCardProps {
   canReview: boolean;
   onNavigate: (path: string) => void;
-}
-
-function GitHubIcon({ color }: { color: string }) {
-  return (
-    <Box
-      component="svg"
-      width={18}
-      height={18}
-      viewBox="0 0 24 24"
-      sx={{ color: color, display: "block" }}
-    >
-      <GitHub />
-    </Box>
-  );
 }
 
 export default function GitHubServiceCard({ canReview, onNavigate }: GitHubServiceCardProps) {
@@ -52,7 +38,10 @@ export default function GitHubServiceCard({ canReview, onNavigate }: GitHubServi
   return (
     <Box
       sx={{
-        background: theme.palette.surface.primary.active,
+        background:
+          theme.palette.mode === "dark"
+            ? theme.palette.surface.primary.active
+            : theme.palette.neutral["white"],
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: "18px",
         height: "100%",
@@ -62,48 +51,7 @@ export default function GitHubServiceCard({ canReview, onNavigate }: GitHubServi
       }}
     >
       {/* Header */}
-      <Box
-        onClick={() => onNavigate("/repository-requests")}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1.4,
-          px: 2.25,
-          pt: 2,
-          pb: 1.75,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          cursor: "pointer",
-          transition: "background 0.18s ease",
-          "&:hover": { background: theme.palette.action.hover },
-        }}
-      >
-        <Box
-          sx={{
-            width: 34,
-            height: 34,
-            borderRadius: "9px",
-            border: `1px solid ${theme.palette.divider}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <GitHubIcon color={theme.palette.text.primary} />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            sx={{
-              fontSize: 14,
-              // fontWeight: 600,
-              color: theme.palette.customText.primary.p1.active,
-            }}
-          >
-            GitHub
-          </Typography>
-        </Box>
-        <ChevronRight size={13} color={theme.palette.customText.primary.p3.active} />
-      </Box>
+      <ServiceCardHeader title="GitHub" onNavigate={onNavigate} icon={<GitHub />} />
 
       {/* Service rows */}
       <Box>

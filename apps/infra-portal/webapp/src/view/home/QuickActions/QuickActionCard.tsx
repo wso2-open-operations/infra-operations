@@ -23,7 +23,7 @@ interface QuickActionCardProps {
   iconBg: string;
   iconColor: string;
   label: string;
-  sub: string;
+  subtitle: string;
   onClick: () => void;
 }
 
@@ -32,7 +32,7 @@ export default function QuickActionCard({
   iconBg,
   iconColor,
   label,
-  sub,
+  subtitle,
   onClick,
 }: QuickActionCardProps) {
   const theme = useTheme();
@@ -40,7 +40,10 @@ export default function QuickActionCard({
     <Box
       onClick={onClick}
       sx={{
-        background: theme.palette.surface.primary.active,
+        background:
+          theme.palette.mode === "dark"
+            ? theme.palette.surface.primary.active
+            : theme.palette.neutral["white"],
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: "14px",
         p: 2,
@@ -50,7 +53,6 @@ export default function QuickActionCard({
         gap: 1.25,
         transition: "border-color 0.18s, box-shadow 0.18s, transform 0.18s",
         "&:hover": {
-          borderColor: theme.palette.customBorder.territory.hover,
           boxShadow: theme.shadows[1],
           transform: "translateY(-1px)",
           "& .qa-arrow": { transform: "translateX(3px)", color: theme.palette.primary.main },
@@ -87,7 +89,7 @@ export default function QuickActionCard({
         <Typography
           sx={{ fontSize: 11, color: theme.palette.customText.primary.p3.active, mt: 0.25 }}
         >
-          {sub}
+          {subtitle}
         </Typography>
       </Box>
       <Typography

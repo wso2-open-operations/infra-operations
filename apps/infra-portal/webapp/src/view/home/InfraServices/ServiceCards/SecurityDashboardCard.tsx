@@ -14,30 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 import { Security } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { ChevronRight } from "lucide-react";
 
 import { useEffect } from "react";
 
 import { fetchSecurityDashboardLinks } from "@slices/securityDashboardLinksSlice/securityDashboardLinks";
 import { useAppDispatch, useAppSelector } from "@slices/store";
 
+import ServiceCardHeader from "./ServiceCardTitle";
 import ServiceRow from "./ServiceRow";
-
-function SecurityIcon({ color }: { color: string }) {
-  return (
-    <Box
-      component="svg"
-      width={18}
-      height={18}
-      viewBox="0 0 24 24"
-      sx={{ color: color, display: "block" }}
-    >
-      <Security />
-    </Box>
-  );
-}
 
 export default function SecurityDashboardCard() {
   const theme = useTheme();
@@ -47,7 +33,6 @@ export default function SecurityDashboardCard() {
   const greenColor = theme.palette.success.main;
   const greenBg = alpha(greenColor, 0.1);
   const amberColor = theme.palette.warning.main;
-  const amberBg = alpha(amberColor, 0.1);
   const blueColor = theme.palette.info.main;
 
   useEffect(() => {
@@ -57,7 +42,10 @@ export default function SecurityDashboardCard() {
   return (
     <Box
       sx={{
-        background: theme.palette.surface.primary.active,
+        background:
+          theme.palette.mode === "dark"
+            ? theme.palette.surface.primary.active
+            : theme.palette.neutral["white"],
         border: `1px solid ${theme.palette.divider}`,
         height: "100%",
         borderRadius: "18px",
@@ -67,50 +55,13 @@ export default function SecurityDashboardCard() {
       }}
     >
       {/* Header */}
-      <Box
-        onClick={() =>
+      <ServiceCardHeader
+        title="Security Dashboard"
+        icon={<Security />}
+        onNavigate={() =>
           window.open(securityDashboardLinks.deviceComplianceLink, "_blank", "noopener noreferrer")
         }
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1.4,
-          px: 2.25,
-          pt: 2,
-          pb: 1.75,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          cursor: "pointer",
-          transition: "background 0.18s ease",
-          "&:hover": { background: theme.palette.action.hover },
-        }}
-      >
-        <Box
-          sx={{
-            width: 34,
-            height: 34,
-            borderRadius: "9px",
-            border: `1px solid ${theme.palette.divider}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <SecurityIcon color={theme.palette.text.primary} />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            sx={{
-              fontSize: 14,
-              // fontWeight: 600,
-              color: theme.palette.customText.primary.p1.active,
-            }}
-          >
-            Security Dashboard
-          </Typography>
-        </Box>
-        <ChevronRight size={13} color={theme.palette.customText.primary.p3.active} />
-      </Box>
+      />
 
       {/* Service rows */}
       <Box>
@@ -142,7 +93,7 @@ export default function SecurityDashboardCard() {
         <ServiceRow
           dotColor={amberColor}
           label="Security score overview"
-          tag={{ tagName: "all", tagBackground: amberBg, tagColor: amberColor }}
+          tag={{ tagName: "all", tagBackground: greenBg, tagColor: greenColor }}
           onClick={() =>
             window.open(securityDashboardLinks.securityScoreLink, "_blank", "noopener noreferrer")
           }

@@ -38,7 +38,10 @@ export default function RecentActivity({ allRequests }: RecentActivityProps) {
     <>
       <Box
         sx={{
-          background: theme.palette.surface.primary.active,
+          background:
+            theme.palette.mode === "dark"
+              ? theme.palette.surface.primary.active
+              : theme.palette.neutral["white"],
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: "18px",
           overflow: "hidden",

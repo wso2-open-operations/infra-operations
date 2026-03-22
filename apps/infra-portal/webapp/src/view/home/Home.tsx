@@ -26,6 +26,7 @@ import { Role } from "@root/src/slices/authSlice/auth";
 import { fetchRepositoryRequests } from "@root/src/slices/repositoryRequestSlice/repositoryRequest";
 import { RootState, useAppDispatch, useAppSelector } from "@root/src/slices/store";
 
+import SectionLabel from "../../component/ui/SectionLabel";
 import Greeting from "./Greeting/Greeting";
 import InfraServices from "./InfraServices/InfraServices";
 import GitHubServiceCard from "./InfraServices/ServiceCards/GitHubServiceCard";
@@ -33,7 +34,6 @@ import SecurityDashboardCard from "./InfraServices/ServiceCards/SecurityDashboar
 import PendingAlertBanner from "./PendingAlertBanner/PendingAlertBanner";
 import QuickActionCard from "./QuickActions/QuickActionCard";
 import RecentActivity from "./RecentActivity/RecentActivity";
-import SectionLabel from "./SectionLabel";
 
 export default function Home() {
   const dispatch = useAppDispatch();
@@ -70,7 +70,7 @@ export default function Home() {
       iconBg: accentBg,
       iconColor: accent,
       label: "New repository request",
-      sub: "Request a new GitHub repo",
+      subtitle: "Request a new GitHub repo",
       onClick: () => navigate("/repository-requests/submit"),
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
@@ -79,7 +79,7 @@ export default function Home() {
       iconBg: blueBg,
       iconColor: blueColor,
       label: "Request repo access",
-      sub: "Get access to an existing repo",
+      subtitle: "Get access to an existing repo",
       onClick: () => navigate("/repository-access-requests/submit"),
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
@@ -88,7 +88,7 @@ export default function Home() {
       iconBg: greenBg,
       iconColor: greenColor,
       label: "View my requests",
-      sub: "Track status and history",
+      subtitle: "Track status and history",
       onClick: () => navigate("/repository-requests"),
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
@@ -97,7 +97,7 @@ export default function Home() {
       iconBg: amberBg,
       iconColor: amberColor,
       label: "Review requests",
-      sub: "Review pending submissions",
+      subtitle: "Review pending submissions",
       onClick: () => navigate("/review-repository-requests"),
       show: canReview,
     },
@@ -112,17 +112,7 @@ export default function Home() {
       }}
     >
       {/* ── Greeting ── */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          mb: 4,
-          gap: 2,
-        }}
-      >
-        <Greeting user={user} roles={roles} />
-      </Box>
+      <Greeting user={user} roles={roles} />
 
       {/* ── Pending alert banner ── */}
       <PendingAlertBanner />
@@ -137,7 +127,7 @@ export default function Home() {
               iconBg={action.iconBg}
               iconColor={action.iconColor}
               label={action.label}
-              sub={action.sub}
+              subtitle={action.subtitle}
               onClick={action.onClick}
             />
           </Grid>
