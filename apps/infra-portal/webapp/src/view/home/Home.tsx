@@ -71,7 +71,7 @@ export default function Home() {
       iconColor: accent,
       label: "New repository request",
       subtitle: "Request a new GitHub repo",
-      onClick: () => navigate("/repository-requests/submit"),
+      onClick: () => navigate("/github/repository-requests"),
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
     {
@@ -80,7 +80,7 @@ export default function Home() {
       iconColor: blueColor,
       label: "Request repo access",
       subtitle: "Get access to an existing repo",
-      onClick: () => navigate("/repository-access-requests/submit"),
+      onClick: () => navigate("/github/repository-access-requests"),
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
     {
@@ -89,7 +89,7 @@ export default function Home() {
       iconColor: greenColor,
       label: "View my requests",
       subtitle: "Track status and history",
-      onClick: () => navigate("/repository-requests"),
+      onClick: () => navigate("/github/repository-requests"),
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
     {
@@ -98,7 +98,7 @@ export default function Home() {
       iconColor: amberColor,
       label: "Review requests",
       subtitle: "Review pending submissions",
-      onClick: () => navigate("/review-repository-requests"),
+      onClick: () => navigate("/github/review-repository-requests"),
       show: canReview,
     },
   ].filter((a) => a.show);
