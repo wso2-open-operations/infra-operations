@@ -53,3 +53,9 @@ export interface RouteObjectWithRole extends NonIndexRouteObject {
   bottomNav?: boolean;
   element?: React.ReactNode;
 }
+
+export type Tag = {
+  tagName: string;
+  tagBackground: string;
+  tagColor: string;
+};

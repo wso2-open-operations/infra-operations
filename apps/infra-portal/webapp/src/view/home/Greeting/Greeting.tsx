@@ -13,7 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { Box, Typography, alpha, useTheme } from "@mui/material";
+import { Box, Chip, Typography, alpha, useTheme } from "@mui/material";
 
 import { Role, UserState } from "@root/src/slices/authSlice/auth";
 
@@ -43,40 +43,53 @@ export default function Greeting({ user, roles }: GreetingProps) {
       : Role.EMPLOYEE.toLowerCase();
 
   return (
-    <Box>
+    <Box
+      sx={{
+        mb: 4,
+      }}
+    >
       <Typography
-        sx={{
-          fontSize: 11,
-          fontWeight: 500,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: theme.palette.customText.primary.p3.active,
-          mb: 0.5,
-          fontFamily: "monospace",
-        }}
+        fontSize={11}
+        fontWeight={500}
+        letterSpacing={"0.1em"}
+        textTransform={"uppercase"}
+        color={theme.palette.customText.primary.p3.active}
+        mb={0.5}
+        fontFamily={"monospace"}
       >
         WSO2 Infra Portal
       </Typography>
       <Typography
-        sx={{
-          fontSize: 26,
-          fontWeight: 600,
-          lineHeight: 1.2,
-          color: theme.palette.text.primary,
-        }}
+        letterSpacing={0.5}
+        fontWeight={600}
+        fontSize={26}
+        lineHeight={1.2}
+        color={theme.palette.text.primary}
       >
         {getGreeting()},{" "}
-        <Box component="span" sx={{ color: accent }}>
+        <Typography
+          component="span"
+          letterSpacing={0.5}
+          fontWeight={600}
+          fontSize={26}
+          lineHeight={1.2}
+          color={accent}
+        >
           {firstName}
-        </Box>
+        </Typography>
       </Typography>
-      <Box
+      <Chip
+        label={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: accent, mb: 0.1 }} />
+            {topRole}
+          </Box>
+        }
         sx={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 0.6,
-          px: 1.25,
-          py: 0.5,
+          height: "fit-content",
+          width: "fit-content",
           borderRadius: "20px",
           fontSize: 11,
           fontWeight: 500,
@@ -87,12 +100,13 @@ export default function Greeting({ user, roles }: GreetingProps) {
           whiteSpace: "nowrap",
           mt: 0.75,
           flexShrink: 0,
+          "& .MuiChip-label": {
+            px: 1.25,
+            py: 0.5,
+          },
         }}
-      >
-        <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: accent }} />
-        {topRole}
-      </Box>
-      <Typography sx={{ fontSize: 13, color: theme.palette.customText.primary.p3.active, mt: 0.6 }}>
+      />
+      <Typography fontSize={13} color={theme.palette.customText.primary.p3.active} mt={0.6}>
         Manage your infrastructure requests and access from one place.
       </Typography>
     </Box>

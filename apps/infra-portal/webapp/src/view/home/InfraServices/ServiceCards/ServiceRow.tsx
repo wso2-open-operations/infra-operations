@@ -16,11 +16,7 @@
 import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-type Tag = {
-  tagName: string;
-  tagBackground: string;
-  tagColor: string;
-};
+import { Tag } from "@root/src/types/types";
 
 interface ServiceRowProps {
   dotColor: string;

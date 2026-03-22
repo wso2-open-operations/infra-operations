@@ -48,7 +48,7 @@ export default function PendingAlertBanner() {
           background: amberBg,
           border: `1px solid ${alpha(amberColor, 0.15)}`,
           borderRadius: "14px",
-          mb: 3.5,
+          mb: 4,
           cursor: "pointer",
           transition: "opacity 0.18s ease",
           "&:hover": { opacity: 0.82 },
