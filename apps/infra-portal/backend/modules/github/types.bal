@@ -338,3 +338,51 @@ public enum GitHubOperationStatus {
     FAILURE,
     PARTIAL_FAILURE
 }
+
+# GithubApp owner.
+public type Owner record {
+    # Login of the token owner
+    string login;
+};
+
+# Fine-grained access token information.
+public type FineGrainedAccessToken record {
+    # PAT request id
+    int id;
+    # Login of the token owner
+    Owner owner;
+    # ID of the token
+    int token_id;
+    # Token name
+    string token_name;
+    # Whether the token is expired
+    boolean token_expired;
+    # Expiration time of the token
+    string token_expires_at;
+    # Permissions associated with the token
+    json permissions;
+};
+
+# Successful response record for GitHub API calls.
+public type SuccessFineGrainedAccessTokenResponse record {
+    # Login associated with the successful request
+    string login;
+    # List of fine-grained access tokens retrieved for the login
+    FineGrainedAccessToken[] tokens;
+};
+
+# Failed response record for GitHub API errors.
+public type FailedResponse record {
+    # Login associated with the failed request
+    string login;
+    # Error message describing the failure
+    string errorMessage;
+};
+
+# Fine-grained access token response.
+public type FineGrainedAccessTokenResponse record {
+    # List of successful responses containing fine-grained access tokens for each login
+    SuccessFineGrainedAccessTokenResponse[] successfulResponses;
+    # List of failed responses containing error details for each login that encountered an error
+    FailedResponse[] failedResponses;
+};
