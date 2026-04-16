@@ -20,7 +20,7 @@ import ballerina/sql;
 #
 # + mainQuery - Main query without the sub query
 # + filters - Array of sub queries to be added to the main query
-# + return - Dynamically build sql:ParameterizedQuery
+# + return - Dynamically built sql:ParameterizedQuery
 isolated function buildSqlUpdateQuery(sql:ParameterizedQuery mainQuery, sql:ParameterizedQuery[] filters)
     returns sql:ParameterizedQuery {
 
@@ -68,7 +68,8 @@ isolated function buildSqlSelectQuery(sql:ParameterizedQuery mainQuery, sql:Para
 #
 # + values - Array of any data type
 # + return - Array of strings
-isolated function formatToCommaSeparatedString(any[] values) returns string {  
-    string[] stringValues = from any val in values select val.toString();
+isolated function formatToCommaSeparatedString(any[] values) returns string {
+    string[] stringValues = from any val in values
+        select val.toString();
     return ", ".'join(...stringValues);
 }
