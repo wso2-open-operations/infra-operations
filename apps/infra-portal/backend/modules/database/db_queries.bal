@@ -16,7 +16,7 @@
 
 import ballerina/sql;
 
-# Query to get a specific repository request by id
+# Query to get a specific repository request by id.
 #
 # + id - Repository request id
 # + return - RepositoryRequest object
@@ -57,7 +57,7 @@ isolated function getRepositoryRequestQuery(int id) returns sql:ParameterizedQue
         rr.id = ${id};
     `;
 
-# Query to get all repository requests created by a user (member or lead)
+# Query to get all repository requests created by a user (member or lead).
 #
 # + memberEmail - Member email
 # + leadEmail - Lead email
@@ -67,8 +67,8 @@ isolated function getRepositoryRequestQuery(int id) returns sql:ParameterizedQue
 # + approvalState - Approval state of the repository request
 # + return - Repository requests created by the user or sql:Error
 isolated function getRepositoryRequestsQuery(string? memberEmail, string? leadEmail, int? 'limit, int? offset,
-    string? repoName, RepositoryRequestState? approvalState) returns sql:ParameterizedQuery {
-        
+        string? repoName, RepositoryRequestState? approvalState) returns sql:ParameterizedQuery {
+
     sql:ParameterizedQuery mainQuery = `
         SELECT 
             rr.id, 
@@ -134,13 +134,14 @@ isolated function getRepositoryRequestsQuery(string? memberEmail, string? leadEm
     return mainQuery;
 }
 
-# Query to get repository requests by organization id
+# Query to get repository requests by organization id.
 #
 # + organizationId - Organization id
 # + state - Repository request state
 # + return - Query to get repository requests by organization id
 isolated function getRepositoryRequestsIdsByOrganizationIdQuery(int organizationId, string? state) returns
     sql:ParameterizedQuery => `
+    
     SELECT 
         rr.id
     FROM 
@@ -149,13 +150,14 @@ isolated function getRepositoryRequestsIdsByOrganizationIdQuery(int organization
         rr.organization_id = ${organizationId} AND rr.state = ${state};
 `;
 
-# Query to get repository requests by lead email
+# Query to get repository requests by lead email.
 #
 # + leadEmail - Lead email
 # + state - Repository request state
 # + return - Query to get repository requests by lead email
 isolated function getRepositoryRequestsIdsByLeadQuery(string leadEmail, string? state)
     returns sql:ParameterizedQuery => `
+
     SELECT 
         rr.id
     FROM 
@@ -164,7 +166,7 @@ isolated function getRepositoryRequestsIdsByLeadQuery(string leadEmail, string? 
         rr.lead_email = ${leadEmail} AND rr.state = ${state};
 `;
 
-# Query to insert a new repository request
+# Query to insert a new repository request.
 #
 # + payload - RepositoryRequestCreate object
 # + return - Query to insert a new repository request
@@ -219,7 +221,7 @@ isolated function insertRepositoryRequestQuery(RepositoryRequestCreate payload) 
     );
 `;
 
-# Query to delete a repository request by id
+# Query to delete a repository request by id.
 #
 # + requestId - Repository request id
 # + return - sql:ParameterizedQuery
@@ -232,13 +234,14 @@ isolated function rejectRepositoryRequestQuery(int requestId) returns sql:Parame
         id = ${requestId};
     `;
 
-# Query to update a repository request by id
+# Query to update a repository request by id.
 #
 # + requestId - Repository request id
 # + payload - RepositoryRequestUpdate object
 # + return - sql:ParameterizedQuery
 isolated function updateRepositoryRequestQuery(int requestId, RepositoryRequestUpdate payload)
     returns sql:ParameterizedQuery => `
+
     UPDATE 
         repository_requests
     SET
@@ -267,7 +270,7 @@ isolated function updateRepositoryRequestQuery(int requestId, RepositoryRequestU
         id = ${requestId};
     `;
 
-# Query to approve a repository request
+# Query to approve a repository request.
 #
 # + requestId - Repository request id
 # + return - sql:ParameterizedQuery
@@ -280,7 +283,7 @@ isolated function approveRepositoryRequestQuery(int requestId) returns sql:Param
         id = ${requestId};
     `;
 
-# Query to get all comments for a repository request
+# Query to get all comments for a repository request.
 #
 # + requestId - Repository request id
 # + return - Query to get all comments for a repository request
@@ -299,7 +302,7 @@ isolated function getRepositoryRequestCommentsQuery(int requestId) returns sql:P
         created_at ASC
     `;
 
-# Query to add a new comment to a repository request
+# Query to add a new comment to a repository request.
 #
 # + requestId - Repository request id
 # + authorEmail - Email of the comment author
@@ -307,6 +310,7 @@ isolated function getRepositoryRequestCommentsQuery(int requestId) returns sql:P
 # + return - Query to add a new comment to a repository request
 isolated function addRepositoryRequestCommentQuery(int requestId, string authorEmail, string commentText)
     returns sql:ParameterizedQuery => `
+
     INSERT INTO repository_request_comments (
         request_id,
         author_email,
@@ -319,7 +323,7 @@ isolated function addRepositoryRequestCommentQuery(int requestId, string authorE
     )
     `;
 
-# Query to get all topics
+# Query to get all topics.
 #
 # + return - List of topics
 isolated function getTopicsQuery() returns sql:ParameterizedQuery => `
@@ -332,10 +336,10 @@ isolated function getTopicsQuery() returns sql:ParameterizedQuery => `
         active = true;
     `;
 
-# Query to get a topic by name
-# 
-#   + topicName - Topic name
-#   + return - Query to get a topic by name
+# Query to get a topic by name.
+#
+# + topicName - Topic name
+# + return - Query to get a topic by name
 isolated function getTopicByNameQuery(string topicName) returns sql:ParameterizedQuery => `
     SELECT 
         topic_id,
@@ -345,11 +349,11 @@ isolated function getTopicByNameQuery(string topicName) returns sql:Parameterize
     WHERE
         topic_name = ${topicName}
     `;
-    
-# Query to get a topic by id
-# 
-#   + topicId - Topic id
-#   + return - Query to get a topic by id
+
+# Query to get a topic by id.
+#
+# + topicId - Topic id
+# + return - Query to get a topic by id
 isolated function getTopicByIdQuery(int topicId) returns sql:ParameterizedQuery => `
     SELECT 
         topic_id,
@@ -360,7 +364,7 @@ isolated function getTopicByIdQuery(int topicId) returns sql:ParameterizedQuery 
         topic_id = ${topicId}
     `;
 
-# Query to add a new topic
+# Query to add a new topic.
 #
 # + topic - New topic
 # + return - Query to add a new topic
@@ -373,7 +377,7 @@ isolated function addTopicQuery(string topic) returns sql:ParameterizedQuery => 
     )
     `;
 
-# Query to update a topic
+# Query to update a topic.
 #
 # + topicId - Topic id
 # + topicName - Topic name
@@ -388,7 +392,7 @@ isolated function updateTopicQuery(int topicId, string topicName) returns sql:Pa
         topic_id = ${topicId};
     `;
 
-# Query to delete a topic by id
+# Query to delete a topic by id.
 #
 # + topicId - Topic id
 # + return - Query to delete a topic by id
@@ -401,7 +405,7 @@ isolated function deleteTopicQuery(int topicId) returns sql:ParameterizedQuery =
         topic_id = ${topicId};
     `;
 
-# Query to get all leads
+# Query to get all leads.
 #
 # + return - List of leads
 # + return - Query to get all leads
@@ -416,7 +420,7 @@ isolated function getLeadsQuery() returns sql:ParameterizedQuery => `
         active = true;
     `;
 
-# Query to get a lead by email
+# Query to get a lead by email.
 #
 # + Id - Lead id
 # + leadEmail - Lead email
@@ -432,7 +436,7 @@ isolated function getTeamLeadQuery(int? Id, string? leadEmail) returns sql:Param
         id = ${Id} OR lead_email = ${leadEmail}
     `;
 
-# Query to add a new lead
+# Query to add a new lead.
 #
 # + leadEmail - New lead email
 # + teamName - New lead team
@@ -448,7 +452,7 @@ isolated function addLeadQuery(string leadEmail, string teamName) returns sql:Pa
     )
     `;
 
-# Query to delete a lead by id
+# Query to delete a lead by id.
 #
 # + leadId - Lead id
 # + return - Query to delete a lead by id
@@ -461,7 +465,7 @@ isolated function deleteLeadQuery(int leadId) returns sql:ParameterizedQuery => 
         id = ${leadId};
     `;
 
-# Query to update a lead
+# Query to update a lead.
 #
 # + leadId - Lead id
 # + leadEmail - Lead email
@@ -469,6 +473,7 @@ isolated function deleteLeadQuery(int leadId) returns sql:ParameterizedQuery => 
 # + return - Query to update a lead
 isolated function updateTeamLeadQuery(int leadId, string leadEmail, string teamName)
     returns sql:ParameterizedQuery => `
+
     UPDATE 
         team_leads
     SET 
@@ -479,7 +484,7 @@ isolated function updateTeamLeadQuery(int leadId, string leadEmail, string teamN
         id = ${leadId};
     `;
 
-# Query to get all organizations
+# Query to get all organizations.
 #
 # + return - List of organizations
 isolated function getOrganizationsQuery() returns sql:ParameterizedQuery => `
@@ -502,7 +507,7 @@ isolated function getOrganizationsQuery() returns sql:ParameterizedQuery => `
         o.organization_id, o.organization_name, o.visibility, o.plan, o.enable_issues;
     `;
 
-# Query to get an organization by name
+# Query to get an organization by name.
 #
 # + organizationName - Organization name
 # + return - Query to get an organization by name
@@ -520,7 +525,7 @@ isolated function getOrganizationByNameQuery(string organizationName) returns sq
         organization_name = ${organizationName}
     `;
 
-# Query to get an organization by id
+# Query to get an organization by id.
 #
 # + organizationId - Organization id
 # + return - Query to get an organization by id
@@ -543,7 +548,7 @@ isolated function getOrganizationByIdQuery(int organizationId) returns sql:Param
         o.organization_id = ${organizationId}
     `;
 
-# Query to add a new organization
+# Query to add a new organization.
 #
 # + organizationName - Organization name
 # + organizationVisibility - Visibility of the organization (public or private)
@@ -551,7 +556,8 @@ isolated function getOrganizationByIdQuery(int organizationId) returns sql:Param
 # + enableIssues - Whether issues are allowed(1) or not(0) for the organization
 # + return - Query to add a new organization
 isolated function addOrganizationQuery(string organizationName, string organizationVisibility, string organizationPlan,
-    boolean enableIssues) returns sql:ParameterizedQuery => `
+        boolean enableIssues) returns sql:ParameterizedQuery => `
+
     INSERT INTO github_organizations (
         organization_name,
         visibility,
@@ -566,7 +572,7 @@ isolated function addOrganizationQuery(string organizationName, string organizat
     )
     `;
 
-# Query to update an organization
+# Query to update an organization.
 #
 # + organizationId - Organization id
 # + organizationName - Organization name
@@ -575,7 +581,8 @@ isolated function addOrganizationQuery(string organizationName, string organizat
 # + enableIssues - Whether issues are allowed(1) or not(0) for the organization
 # + return - Query to update an organization
 isolated function updateOrganizationQuery(int organizationId, string organizationName, string organizationVisibility,
-    string organizationPlan, boolean enableIssues) returns sql:ParameterizedQuery => `
+        string organizationPlan, boolean enableIssues) returns sql:ParameterizedQuery => `
+
     UPDATE 
         github_organizations
     SET 
@@ -602,7 +609,7 @@ isolated function syncOrganizationPlanQuery(string organizationName, string plan
         organization_name = ${organizationName};
     `;
 
-# Query to delete an organization by id
+# Query to delete an organization by id.
 #
 # + organizationId - Organization id
 # + return - Query to delete an organization by id
@@ -617,7 +624,7 @@ isolated function deleteOrganizationQuery(int organizationId) returns sql:Parame
             g.active = TRUE
     `;
 
-# Query to get all default teams for a given organization
+# Query to get all default teams for a given organization.
 #
 # + organizationId - Organization id
 # + return - Query to get all default teams for a given organization
@@ -636,12 +643,12 @@ isolated function getDefaultTeamsForOrganizationQuery(int organizationId) return
         dt.team_name ASC
     `;
 
-# Query to add a default team for an organization
+# Query to add a default team for an organization.
 #
 # + organizationId - Organization id
 # + teamId - Team id
 # + return - Query to add a default team for an organization
-isolated function addOrganizationDefaultTeamQuery(int organizationId, int teamId) returns sql:ParameterizedQuery =>`
+isolated function addOrganizationDefaultTeamQuery(int organizationId, int teamId) returns sql:ParameterizedQuery => `
     INSERT INTO organization_default_teams (
         organization_id,
         team_id
@@ -651,7 +658,7 @@ isolated function addOrganizationDefaultTeamQuery(int organizationId, int teamId
     ) ON DUPLICATE KEY UPDATE team_id = VALUES(team_id);
     `;
 
-# Query to delete default team for an organization
+# Query to delete default team for an organization.
 #
 # + organizationId - Organization id
 # + return - Query to delete default team for an organization
@@ -662,7 +669,7 @@ isolated function deleteOrganizationDefaultTeamQuery(int organizationId) returns
         organization_id = ${organizationId};
     `;
 
-# Query to get all default teams
+# Query to get all default teams.
 #
 # + return - List of default teams
 isolated function getDefaultTeamsQuery() returns sql:ParameterizedQuery => `
@@ -678,7 +685,7 @@ isolated function getDefaultTeamsQuery() returns sql:ParameterizedQuery => `
         team_name ASC
     `;
 
-# Query to get a default team by id
+# Query to get a default team by id.
 #
 # + teamId - ID of the default team
 # + return - Query to get a default team by id
@@ -693,7 +700,7 @@ isolated function getDefaultTeamByIdQuery(int teamId) returns sql:ParameterizedQ
         team_id = ${teamId}
     `;
 
-# Query to get a default team by name
+# Query to get a default team by name.
 #
 # + teamName - Name of the default team
 # + return - Query to get a default team by name
@@ -708,7 +715,7 @@ isolated function getDefaultTeamByNameQuery(string teamName) returns sql:Paramet
         team_name = ${teamName}
     `;
 
-# Query to add a new default team
+# Query to add a new default team.
 #
 # + teamName - Name of the default team
 # + permissionLevel - Permission level for the team (e.g., 'pull', 'triage', 'push')
@@ -724,14 +731,15 @@ isolated function addDefaultTeamQuery(string teamName, string permissionLevel) r
     )
     `;
 
-# Query to update a default team by id
+# Query to update a default team by id.
 #
 # + teamId - Id of the default team
 # + teamName - New name for the team (optional)
 # + permissionLevel - New permission level for the team
 # + return - Query to update a default team by id
-isolated function updateDefaultTeamQuery(int teamId, string? teamName, string permissionLevel) 
+isolated function updateDefaultTeamQuery(int teamId, string? teamName, string permissionLevel)
     returns sql:ParameterizedQuery => `
+
     UPDATE 
         default_teams
     SET
@@ -742,7 +750,7 @@ isolated function updateDefaultTeamQuery(int teamId, string? teamName, string pe
         team_id = ${teamId}
     `;
 
-# Query to delete a default team by id
+# Query to delete a default team by id.
 #
 # + teamId - Id of the default team
 # + return - Query to delete a default team by id

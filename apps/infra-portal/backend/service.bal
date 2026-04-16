@@ -195,13 +195,13 @@ service http:InterceptableService / on new http:Listener(8090) {
 
         db:RepositoryRequest[]|error repoRequests =
             db:getRepositoryRequests({
-            memberEmail: memberEmail,
-            leadEmail: leadEmail,
-            approvalState: approvalState,
-            'limit: 'limit,
-            offset: offset,
-            repoName: repoName
-        });
+                                         memberEmail: memberEmail,
+                                         leadEmail: leadEmail,
+                                         approvalState: approvalState,
+                                         'limit: 'limit,
+                                         offset: offset,
+                                         repoName: repoName
+                                     });
 
         if repoRequests is error {
             string customError = "Error occurred while retrieving the repository requests!";
@@ -281,7 +281,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     # Create a new repository request.
     #
     # + request - repository request object
-    # + return - http:Created or error
+    # + return - http:Created or http error
     resource function post repository\-requests(http:RequestContext ctx, db:RepositoryRequestCreate request)
         returns http:Created|http:Forbidden|http:InternalServerError {
 
@@ -329,7 +329,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     # + updatedData - repository request object
     # + return - http:NoContent or error
     resource function patch repository\-requests/[int id](http:RequestContext ctx, db:RepositoryRequestUpdate
-        updatedData) returns http:Ok|http:Forbidden|http:InternalServerError|http:NotFound {
+            updatedData) returns http:Ok|http:Forbidden|http:InternalServerError|http:NotFound {
 
         log:printDebug(string `Updating repository request with ID: ${id}`);
 
@@ -430,7 +430,7 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         if !authorization:checkPermissions(
-            [authorization:authorizedRoles.approver, authorization:authorizedRoles.admin], userInfo.groups) {
+                [authorization:authorizedRoles.approver, authorization:authorizedRoles.admin], userInfo.groups) {
 
             return <http:Forbidden>{
                 body: {
@@ -498,7 +498,7 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         if !authorization:checkPermissions(
-            [authorization:authorizedRoles.approver, authorization:authorizedRoles.admin], userInfo.groups) {
+                [authorization:authorizedRoles.approver, authorization:authorizedRoles.admin], userInfo.groups) {
 
             return <http:Forbidden>{
                 body: {
@@ -828,11 +828,11 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         error? result = db:upsertOrganization(
-            newOrganization.organizationName,
-            newOrganization.organizationVisibility,
-            orgStatus,
-            newOrganization.enableIssues,
-            newOrganization.teamIds
+                newOrganization.organizationName,
+                newOrganization.organizationVisibility,
+                orgStatus,
+                newOrganization.enableIssues,
+                newOrganization.teamIds
         );
         if result is error {
             string customError = "Error while adding organization to database!";
@@ -936,11 +936,11 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
         error? result = db:upsertOrganization(
-            updatedOrganization.organizationName,
-            updatedOrganization.organizationVisibility,
-            organizationPlan,
-            updatedOrganization.enableIssues,
-            updatedOrganization.teamIds
+                updatedOrganization.organizationName,
+                updatedOrganization.organizationVisibility,
+                organizationPlan,
+                updatedOrganization.enableIssues,
+                updatedOrganization.teamIds
         );
 
         if result is error {
