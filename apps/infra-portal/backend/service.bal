@@ -147,7 +147,7 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         // Sort employees by email in ascending order.
-        entity:EmployeeBasic[] sortedEmployees = from var employee in employees
+        entity:EmployeeBasic[] sortedEmployees = from entity:EmployeeBasic employee in employees
             order by employee.workEmail.toLowerAscii() ascending
             select employee;
 
