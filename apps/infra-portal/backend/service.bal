@@ -1593,4 +1593,41 @@ service http:InterceptableService / on new http:Listener(8090) {
 
         return securityDashboardLinks;
     }
+
+    # Get fine-grained access tokens of the organization.
+    #
+    # + return - List of successful responses and failed responses or error
+    isolated resource function get fine\-grained\-access\-tokens(http:RequestContext ctx)
+        returns gh:FineGrainedAccessTokenResponse|http:Forbidden|http:NotFound|http:InternalServerError {
+
+        // interceptor set this value after validating the jwt.
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.admin], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
+                }
+            };
+        }
+
+        gh:FineGrainedAccessTokenResponse|error fineGrainedAccessTokens = gh:getFinegrainedAccessTokens();
+        if fineGrainedAccessTokens is error {
+            string customError = "Error while fetching fine-grained access tokens!";
+            log:printError(customError, fineGrainedAccessTokens);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+        return fineGrainedAccessTokens;
+    }
 }

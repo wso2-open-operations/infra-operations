@@ -411,3 +411,14 @@ public isolated function addTeams(AddTeamInput teamsInput)
         errorMessage: string `Failed to add the following teams: ${teamResultsRaw.toString()}`
     };
 }
+
+# API Call to get fine-grained access tokens of the organization.
+#
+# + return - List of fine-grained access tokens or error
+public isolated function getFinegrainedAccessTokens() returns FineGrainedAccessTokenResponse|error {
+    http:Client|error githubClient = createGithubClient();
+    if githubClient is error {
+        return githubClient;
+    }
+    return githubClient->/orgs/personal\-access\-tokens.get();
+}
