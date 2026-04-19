@@ -21,15 +21,15 @@ import infra_portal.github as gh;
 #
 # + repoRequest - Repository request object
 # + return - Array of GitHub operation results list
-public isolated function createGitHubRepository(db:RepositoryRequest repoRequest) returns gh:gitHubOperationResult[] {
+public isolated function createGitHubRepository(db:RepositoryRequest repoRequest) returns gh:GitHubOperationResult[] {
 
     gh:Team[]|error formattedTeams = formatTeams(
-        repoRequest.organizationId,
-        repoRequest.organizationName,
-        repoRequest.organizationVisibility,
-        repoRequest.enableTriageWso2All,
-        repoRequest.enableTriageWso2AllInterns,
-        re `,`.split(repoRequest.teams)
+            repoRequest.organizationId,
+            repoRequest.organizationName,
+            repoRequest.organizationVisibility,
+            repoRequest.enableTriageWso2All,
+            repoRequest.enableTriageWso2AllInterns,
+            re `,`.split(repoRequest.teams)
     );
 
     if formattedTeams is error {
@@ -41,7 +41,7 @@ public isolated function createGitHubRepository(db:RepositoryRequest repoRequest
             }
         ];
     }
-    gh:gitHubOperationResult[] gitopresults = [];
+    gh:GitHubOperationResult[] gitopresults = [];
     string orgName = repoRequest.organizationName;
     string repoName = repoRequest.repoName;
     gh:CreateRepoInput createRepoInput = {
@@ -59,7 +59,7 @@ public isolated function createGitHubRepository(db:RepositoryRequest repoRequest
         repoName: repoRequest.repoName,
         topics: re `,`.split(repoRequest.topics)
     };
-    
+
     gh:AddTeamInput addTeamInput = {
         orgName: repoRequest.organizationName,
         repoName: repoRequest.repoName,
@@ -72,22 +72,22 @@ public isolated function createGitHubRepository(db:RepositoryRequest repoRequest
         branchProtectionType: repoRequest.prProtection
     };
 
-    gh:gitHubOperationResult createRepoResult = gh:createRepository(createRepoInput);
+    gh:GitHubOperationResult createRepoResult = gh:createRepository(createRepoInput);
     gitopresults.push(createRepoResult);
     if createRepoResult.status is gh:FAILURE {
         return gitopresults;
     }
-    gh:gitHubOperationResult addTopicsResult = gh:addTopics(addTopicsInput);
+    gh:GitHubOperationResult addTopicsResult = gh:addTopics(addTopicsInput);
     gitopresults.push(addTopicsResult);
-    gh:gitHubOperationResult labelError = gh:addLabels(orgName, repoName);
+    gh:GitHubOperationResult labelError = gh:addLabels(orgName, repoName);
     gitopresults.push(labelError);
-    gh:gitHubOperationResult issueTemplateError = gh:addIssueTemplate(orgName, repoName);
+    gh:GitHubOperationResult issueTemplateError = gh:addIssueTemplate(orgName, repoName);
     gitopresults.push(issueTemplateError);
-    gh:gitHubOperationResult issuePrTemplateError = gh:addPRTemplate(orgName, repoName);
+    gh:GitHubOperationResult issuePrTemplateError = gh:addPRTemplate(orgName, repoName);
     gitopresults.push(issuePrTemplateError);
-    gh:gitHubOperationResult branchProtectionError = gh:addBranchProtection(addBranchProtectionInput);
+    gh:GitHubOperationResult branchProtectionError = gh:addBranchProtection(addBranchProtectionInput);
     gitopresults.push(branchProtectionError);
-    gh:gitHubOperationResult teamError = gh:addTeams(addTeamInput);
+    gh:GitHubOperationResult teamError = gh:addTeams(addTeamInput);
     gitopresults.push(teamError);
 
     return gitopresults;
@@ -120,8 +120,8 @@ public isolated function createKeyValuePair(db:RepositoryRequest repoRequest) re
         "jenkinsJobType": repoRequest.jenkinsJobType is string ? repoRequest.jenkinsJobType.toString() : "N/A",
         "jenkinsGroupId": repoRequest.jenkinsGroupId is string ? repoRequest.jenkinsGroupId.toString() : "N/A",
         "azureDevopsOrg": repoRequest.azureDevopsOrg is string ? repoRequest.azureDevopsOrg.toString() : "N/A",
-        "azureDevopsProject": repoRequest.azureDevopsProject is string ? 
-        repoRequest.azureDevopsProject.toString() : "N/A",
+        "azureDevopsProject": repoRequest.azureDevopsProject is string ?
+            repoRequest.azureDevopsProject.toString() : "N/A",
         "timestamp": repoRequest.timestamp.toString()
     };
     return keyValPairs;
@@ -131,9 +131,9 @@ public isolated function createKeyValuePair(db:RepositoryRequest repoRequest) re
 #
 # + gitHubOperationResult - Github operation result array
 # + return - Key value pair object with operation status
-public isolated function getGhStatusReport(gh:gitHubOperationResult[] gitHubOperationResult) returns map<string> {
+public isolated function getGhStatusReport(gh:GitHubOperationResult[] gitHubOperationResult) returns map<string> {
     map<string> reportMap = {};
-    foreach gh:gitHubOperationResult result in gitHubOperationResult {
+    foreach gh:GitHubOperationResult result in gitHubOperationResult {
         reportMap[result.operation] = result.status;
     }
     return reportMap;
@@ -148,8 +148,8 @@ public isolated function getGhStatusReport(gh:gitHubOperationResult[] gitHubOper
 # + enableTriageWso2AllInterns - Whether to enable triage for WSO2 All Interns team
 # + teams - List of teams
 # + return - Updated list of teams
-public isolated function formatTeams(int orgId, string organizationName, string orgVisibility, 
-    string enableTriageWso2All, string enableTriageWso2AllInterns, string[] teams) returns gh:Team[]|error {
+public isolated function formatTeams(int orgId, string organizationName, string orgVisibility,
+        string enableTriageWso2All, string enableTriageWso2AllInterns, string[] teams) returns gh:Team[]|error {
 
     gh:Team[] formattedteams = [];
     db:Team[] defaultTeamsDbResult = check db:getDefaultTeamsForOrganization(orgId);
@@ -158,7 +158,7 @@ public isolated function formatTeams(int orgId, string organizationName, string 
             slug: team.teamName,
             permission: team.permission
         };
-        
+
     foreach gh:Team team in defaultTeamsResult {
         if orgVisibility == "Private" && (
             (team.slug == WSO2_ALL_TEAM_SLUG && enableTriageWso2All == "No") ||

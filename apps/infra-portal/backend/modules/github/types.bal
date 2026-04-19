@@ -303,6 +303,71 @@ public type AddTeamsResult record {|
     string[] failedTeams;
 |};
 
+# Member permission levels.
+public enum MemberRole {
+    ALL_ROLES = "all",
+    MEMBER = "member",
+    MAINTAINER = "maintainer"
+};
+
+# Member state enumeration.
+public enum MemberState {
+    ACTIVE = "active",
+    PENDING = "pending"
+};
+
+# Record to represent the input for adding or updating team members.
+public type OrganizationAndTeam record {
+    # Organization name
+    string orgName;
+    # Team slug
+    string teamSlug;
+};
+
+# Team membership response for users.
+public type MembershipResponse record {|
+    # The state of the membership.
+    MemberState state;
+    # The role of the member.
+    MemberRole role;
+    # The URL of the membership.
+    string url;
+|};
+
+# Record to represent a GitHub user.
+public type AddOrUpdateTeamMemberInformationInput record {|
+    # The organization name.
+    string orgName;
+    # The slug of the team.
+    string teamSlug;
+    # The username of the member to be added or updated.
+    string userName;
+    # The role of the member in the team (e.g., "member", "maintainer").
+    MemberRole role;
+|};
+
+# Record to represent a successful membership addition or update.
+public type SuccessfulMembershipResponse record {|
+    *AddOrUpdateTeamMemberInformationInput;
+    # The response from the GitHub API after adding or updating the team member's information.
+    MembershipResponse membershipResponse;
+|};
+
+# Record to represent a failed membership addition or update.
+public type FailedMembershipResponse record {|
+    *AddOrUpdateTeamMemberInformationInput;
+    # Error message describing the failure
+    string errorMessage;
+|};
+
+# Record to represent the response of adding or updating team members, including both successful and failed operations.
+public type AddOrUpdateTeamMemberResponse record {|
+    # List of successful membership additions or updates.
+    SuccessfulMembershipResponse[] successfulMemberships;
+    # List of failed membership additions or updates.
+    FailedMembershipResponse[] failedMemberships;
+|};
+
 # Map for branch protection types.
 public const map<string> branchProtectionMap = {
     "Default": "DEFAULT",
@@ -319,7 +384,8 @@ public enum GitHubOperation {
     ADD_ISSUE_TEMPLATE,
     ADD_PULL_REQUEST_TEMPLATE,
     ADD_BRANCH_PROTECTION,
-    ADD_TEAMS
+    ADD_TEAMS,
+    ADD_OR_UPDATE_TEAM_MEMBERS
 }
 
 # Enum for team formats.

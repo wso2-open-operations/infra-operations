@@ -422,3 +422,51 @@ public isolated function getFinegrainedAccessTokens() returns FineGrainedAccessT
     }
     return githubClient->/orgs/personal\-access\-tokens.get();
 }
+
+# API Call to get the teams of the organization.
+#
+# + orgName - Organization name
+# + return - List of teams or error
+public isolated function getTeamsForOrganization(string orgName) returns GitHubTeam[]|error {
+    http:Client|error githubClient = createGithubClient();
+    if githubClient is error {
+        return githubClient;
+    }
+    return githubClient->/orgs/[orgName]/teams.get();
+}
+
+# API Call to add or update team membership for multiple users.
+#
+# + inputs - List of input objects containing organization name, team slug, user name, and role
+# + return - List of successful and failed operations
+public isolated function addOrUpdateTeamMemberships(AddOrUpdateTeamMemberInformationInput[] inputs)
+    returns AddOrUpdateTeamMemberResponse|error {
+
+    http:Client|error githubClient = createGithubClient();
+    if githubClient is error {
+        return githubClient;
+    }
+
+    FailedMembershipResponse[] failedResponses = [];
+    SuccessfulMembershipResponse[] successfulResponses = [];
+
+    foreach AddOrUpdateTeamMemberInformationInput input in inputs {
+        MembershipResponse|error response = githubClient->/orgs/[input.orgName]/teams/[input.teamSlug]/memberships/[input.userName].put({role: input.role});
+        if response is error {
+            failedResponses.push({
+                ...input,
+                errorMessage: response.message()
+            });
+        } else {
+            successfulResponses.push({
+                ...input,
+                membershipResponse: response
+            });
+        }
+    }
+    return {
+        successfulMemberships: successfulResponses,
+        failedMemberships: failedResponses
+    };
+}
+

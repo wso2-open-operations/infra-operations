@@ -222,7 +222,8 @@ public enum GitHubOperation {
     ADD_ISSUE_TEMPLATE,
     ADD_PULL_REQUEST_TEMPLATE,
     ADD_BRANCH_PROTECTION,
-    ADD_TEAMS
+    ADD_TEAMS,
+    ADD_OR_UPDATE_TEAM_MEMBERS
 }
 
 # Enum to represent the status of a GitHub operation.
