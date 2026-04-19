@@ -144,7 +144,7 @@ public type AddLabelsInput record {
 };
 
 # Record to represent the result of a GitHub operation.
-public type gitHubOperationResult record {|
+public type GitHubOperationResult record {|
     # Name of the operation (e.g., ADD_TOPICS, ADD_LABELS)
     GitHubOperation operation;
     # Status of the operation (e.g., Sucess, Failure)

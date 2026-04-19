@@ -36,7 +36,7 @@ public isolated function verifyOrganization(string orgName) returns string|error
 }
 
 # Checks whether the read-only team exists in the organization.
-# 
+#
 # + orgName - Name of the organization
 # + return - true if the read-only team exists, false otherwise or an error
 public isolated function verifyReadOnlyTeam(string orgName) returns boolean|error {
@@ -78,14 +78,14 @@ public isolated function getExternalCommitterTeams(string orgName) returns strin
     return from var team in teamsResponse
         where team.slug.includes(EXTERNAL_COMMITTER_FORMAT)
         select team.slug;
-}   
+}
 
 # Create a repository in GitHub and add requested parameters.
 #
 # + input - Create repository input
 # + return - http response
-public isolated function createRepository(CreateRepoInput input) returns gitHubOperationResult {
-    
+public isolated function createRepository(CreateRepoInput input) returns GitHubOperationResult {
+
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
         return {
@@ -127,8 +127,8 @@ public isolated function createRepository(CreateRepoInput input) returns gitHubO
 #
 # + topicsInput - Input object containing organization name, repository name, and list of topics
 # + return - Status of the operation
-public isolated function addTopics(AddGitTopicsInput topicsInput) returns gitHubOperationResult {
-    
+public isolated function addTopics(AddGitTopicsInput topicsInput) returns GitHubOperationResult {
+
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
         return {
@@ -139,8 +139,8 @@ public isolated function addTopics(AddGitTopicsInput topicsInput) returns gitHub
     }
     AddGitTopicsResponse|error response =
         githubClient->/orgs/[topicsInput.orgName]/repos/[topicsInput.orgName]/[topicsInput.repoName]/topics.post(
-            topicsInput
-        );
+        topicsInput
+    );
 
     if response is error {
         return {
@@ -163,7 +163,7 @@ public isolated function addTopics(AddGitTopicsInput topicsInput) returns gitHub
 
 # + return - Status of the operation
 public isolated function addLabels(string orgName, string repoName)
-    returns gitHubOperationResult {
+    returns GitHubOperationResult {
 
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
@@ -233,7 +233,7 @@ public isolated function addLabels(string orgName, string repoName)
 # + repoName - Repository name
 # + return - Status of the operation
 public isolated function addIssueTemplate(string orgName, string repoName)
-    returns gitHubOperationResult {
+    returns GitHubOperationResult {
 
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
@@ -283,7 +283,7 @@ public isolated function addIssueTemplate(string orgName, string repoName)
 # + repoName - Repository name
 # + return - Status of the operation
 public isolated function addPRTemplate(string orgName, string repoName)
-    returns gitHubOperationResult {
+    returns GitHubOperationResult {
 
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
@@ -332,7 +332,7 @@ public isolated function addPRTemplate(string orgName, string repoName)
 # + branchProtectionInput - Input object containing organization name, repository name, and branch protection type
 # + return - Status of the operation
 public isolated function addBranchProtection(AddBranchProtectionInput branchProtectionInput)
-    returns gitHubOperationResult {
+    returns GitHubOperationResult {
 
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
@@ -344,12 +344,12 @@ public isolated function addBranchProtection(AddBranchProtectionInput branchProt
     }
     AddBranchProtectionInput {orgName, repoName, branchProtectionType} = branchProtectionInput;
     string branchProtectionTypeEnum = branchProtectionMap[branchProtectionType] ?: "DEFAULT";
-    BranchProtectionResponse|error response = 
+    BranchProtectionResponse|error response =
         githubClient->/orgs/[orgName]/repos/[orgName]/[repoName]/branches/main/protection.put({
-            orgName,
-            repoName,
-            branchProtectionType: branchProtectionTypeEnum
-        });
+        orgName,
+        repoName,
+        branchProtectionType: branchProtectionTypeEnum
+    });
 
     if response is error {
         return {
@@ -370,7 +370,7 @@ public isolated function addBranchProtection(AddBranchProtectionInput branchProt
 # + teamsInput - Input object containing organization name, repository name, and list of teams
 # + return - Status of the operation
 public isolated function addTeams(AddTeamInput teamsInput)
-    returns gitHubOperationResult {
+    returns GitHubOperationResult {
 
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
