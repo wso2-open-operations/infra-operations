@@ -18,7 +18,7 @@
 #
 # + workEmail - WSO2 email address
 # + return - Employee | Error
-public isolated function fetchEmployeesBasicInfo(string workEmail) returns Employee|error {
+public isolated function fetchEmployeesBasicInfo(string workEmail) returns Employee|error? {
     string document = string `
         query employeeQuery ($workEmail: String!) {
             employee(email: $workEmail) {
