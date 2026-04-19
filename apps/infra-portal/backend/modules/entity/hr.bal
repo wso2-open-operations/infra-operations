@@ -28,6 +28,7 @@ public isolated function fetchEmployeesBasicInfo(string workEmail) returns Emplo
                 lastName,
                 jobRole,
                 employeeThumbnail,
+                team,
             }
         }
     `;
@@ -61,13 +62,14 @@ public isolated function getEmployees() returns EmployeeBasic[]|error {
         EmployeesResponse response = check hrClient->execute(
             document,
             {
-                filter: filter, 
-                'limit: DEFAULT_LIMIT, 
-                offset: employees.length()
-            }
+            filter: filter,
+            'limit: DEFAULT_LIMIT,
+            offset: employees.length()
+        }
         );
         employees.push(...response.data.employees);
         fetchMore = response.data.employees.length() > 0;
     }
     return employees;
 }
+

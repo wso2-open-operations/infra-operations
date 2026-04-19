@@ -35,6 +35,8 @@ public type UserInfoResponse record {|
     string jobRole;
     # Thumbnail of the employee
     string? employeeThumbnail;
+    # Team of the employee
+    string? team;
     # User Privileges
     int[] privileges;
 |};

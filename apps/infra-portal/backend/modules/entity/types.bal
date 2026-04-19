@@ -51,6 +51,8 @@ public type Employee record {|
     string jobRole;
     # Thumbnail of the employee
     string? employeeThumbnail;
+    # Team of the employee
+    string? team;
 |};
 
 # Employee data.
