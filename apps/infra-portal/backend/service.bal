@@ -67,7 +67,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     #
     # + ctx - Request object
     # + return - User information | Error
-    resource function get user\-info(http:RequestContext ctx) returns UserInfoResponse|http:InternalServerError {
+    resource function get user\-info(http:RequestContext ctx) returns UserInfoResponse|http:NotFound|http:InternalServerError {
 
         // User information header.
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
@@ -88,11 +88,21 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         // Fetch the user information from the entity service.
-        entity:Employee|error loggedInUser = entity:fetchEmployeesBasicInfo(userInfo.email);
+        entity:Employee|error? loggedInUser = entity:fetchEmployeesBasicInfo(userInfo.email);
         if loggedInUser is error {
             string customError = "Error occurred while retrieving user data!";
             log:printError(customError, loggedInUser);
             return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        if loggedInUser is () {
+            string customError = "User information not found!";
+            log:printError(customError);
+            return <http:NotFound>{
                 body: {
                     message: customError
                 }
