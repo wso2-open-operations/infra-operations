@@ -49,10 +49,14 @@ public type Employee record {|
     string lastName;
     # Job role
     string jobRole;
+    # Department
+    string? department;
     # Thumbnail of the employee
     string? employeeThumbnail;
     # Team of the employee
     string? team;
+    # Employment type of the employee
+    string? employmentType;
 |};
 
 # Employee data.

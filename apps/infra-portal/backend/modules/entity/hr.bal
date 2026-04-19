@@ -29,6 +29,8 @@ public isolated function fetchEmployeesBasicInfo(string workEmail) returns Emplo
                 jobRole,
                 employeeThumbnail,
                 team,
+                employmentType,
+                department,
             }
         }
     `;
