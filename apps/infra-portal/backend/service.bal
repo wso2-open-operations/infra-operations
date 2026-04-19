@@ -599,9 +599,9 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         // create the repository in github
-        gh:gitHubOperationResult[] repoCreationResponse = createGitHubRepository(repoRequest);
+        gh:GitHubOperationResult[] repoCreationResponse = createGitHubRepository(repoRequest);
         // check for errors while creating the repository
-        foreach gh:gitHubOperationResult result in repoCreationResponse {
+        foreach gh:GitHubOperationResult result in repoCreationResponse {
             if result.operation == gh:CREATE_REPO && result.status == gh:FAILURE {
                 string customError = string `Error while creating repository: ${result.errorMessage}`;
                 log:printError(customError);
@@ -1681,4 +1681,169 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
         return fineGrainedAccessTokens;
     }
+
+    # Get GitHub teams of the organization.
+    #
+    # + id - Organization ID
+    # + return - List of GitHub teams or error
+    isolated resource function get organizations/[int id]/github\-teams(http:RequestContext ctx)
+        returns gh:GitHubTeam[]|http:Forbidden|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
+                }
+            };
+        }
+
+        db:Organization|error organization = db:getOrganizationById(id);
+        if organization is error {
+            string customError = "Error while fetching organization: ";
+            log:printError(customError, organization, organizationId = id);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        gh:GitHubTeam[]|error teams = gh:getTeamsForOrganization(organization.organizationName);
+        if teams is error {
+            string customError = "Error while fetching teams for organization: ";
+            log:printError(customError, teams, organizationName = organization.organizationName);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        return teams;
+    }
+
+    isolated resource function put [string gitHubUserName]/set\-default\-repository\-access(http:RequestContext ctx) returns gh:AddOrUpdateTeamMemberResponse|http:Forbidden|http:InternalServerError {
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
+                }
+            };
+        }
+
+        entity:Employee|error? employee = entity:fetchEmployeesBasicInfo(userInfo.email);
+        if employee is error {
+            string customError = "Error while fetching employee information!";
+            log:printError(customError, employee, email = userInfo.email);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        if employee is () {
+            string customError = "Employee information not found for the employee!";
+            log:printError(customError, email = userInfo.email);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        gh:AddOrUpdateTeamMemberResponse|error result = error("No team membership changes made as the employment type does not match any criteria.");
+
+        if employee.employmentType is "Permanent" {
+            // - **wso2-support** > `wso2-support-readonly`
+            // - **wso2** > `wso2-readonly`
+            // - **wso2-extensions** > `wso2-readonly`
+            gh:OrganizationAndTeam[] permanent_default_organizations_and_teams = [
+                {orgName: "wso2-support", teamSlug: "wso2-support-readonly"},
+                {orgName: "wso2", teamSlug: "wso2-readonly"},
+                {orgName: "wso2-extensions", teamSlug: "wso2-readonly"}
+            ];
+
+            gh:AddOrUpdateTeamMemberInformationInput[] inputs
+                = from gh:OrganizationAndTeam organizationAndTeam in permanent_default_organizations_and_teams
+                select {
+                    orgName: organizationAndTeam.orgName,
+                    teamSlug: organizationAndTeam.teamSlug,
+                    userName: gitHubUserName,
+                    role: "member"
+                };
+
+            result = gh:addOrUpdateTeamMemberships(inputs);
+
+            if employee.department is "CUSTOMER SUCCESS" {
+                // - **wso2-cs** > `cs-team`
+                // - **wso2-enterprise** > `customer-success-team`
+                gh:OrganizationAndTeam[] cs_organizations_and_teams = [
+                    {orgName: "wso2-cs", teamSlug: "cs-team"},
+                    {orgName: "wso2-enterprise", teamSlug: "customer-success-team"}
+                ];
+
+                gh:AddOrUpdateTeamMemberInformationInput[] cs_inputs
+                    = from gh:OrganizationAndTeam organizationAndTeam in cs_organizations_and_teams
+                    select {
+                        orgName: organizationAndTeam.orgName,
+                        teamSlug: organizationAndTeam.teamSlug,
+                        userName: gitHubUserName,
+                        role: "member"
+                    };
+
+                result = gh:addOrUpdateTeamMemberships(cs_inputs);
+            }
+        }
+
+        if employee.employmentType is "Internship" {
+            // - **wso2-support** > `wso2-all-interns`
+            // - **wso2** > `wso2-all-interns`
+            // - **wso2-extensions** > `wso2-all-interns`
+            // - **ballerina-platform** > `wso2-all-interns`
+            string[] interns_default_organizations = ["wso2-support", "wso2", "wso2-extensions", "ballerina-platform"];
+            string interns_default_team_slug = "wso2-all-interns";
+            gh:AddOrUpdateTeamMemberInformationInput[] inputs
+                = from string organization in interns_default_organizations
+                select {
+                    orgName: organization,
+                    teamSlug: interns_default_team_slug,
+                    userName: gitHubUserName,
+                    role: "member"
+                };
+
+            result = gh:addOrUpdateTeamMemberships(inputs);
+        }
+
+        if result is error {
+            string customError = "Error while adding/updating team membership for the permanent employee!";
+            log:printError(customError, result, userName = gitHubUserName);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        return result;
+    }
+
 }
