@@ -199,7 +199,7 @@ public type Comment record {
     # Email of the author
     string authorEmail;
     # Comment text
-    string commentText; 
+    string commentText;
 };
 
 # Record to represent the result of a GitHub operation.
