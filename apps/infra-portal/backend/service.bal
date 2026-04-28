@@ -1731,6 +1731,10 @@ service http:InterceptableService / on new http:Listener(8090) {
         return teams;
     }
 
+    # Set default repository access for a GitHub user based on their employment type and department.
+    #
+    # + gitHubUserName - GitHub username of the employee
+    # + return - List of successful responses and failed responses or error
     isolated resource function put [string gitHubUserName]/set\-default\-repository\-access(http:RequestContext ctx) returns gh:AddOrUpdateTeamMemberResponse|http:Forbidden|http:InternalServerError {
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
