@@ -1776,62 +1776,42 @@ service http:InterceptableService / on new http:Listener(8090) {
 
         gh:AddOrUpdateTeamMemberResponse|error result = error("No team membership changes made as the employment type does not match any criteria.");
 
-        if employee.employmentType is "Permanent" {
-            // - **wso2-support** > `wso2-support-readonly`
-            // - **wso2** > `wso2-readonly`
-            // - **wso2-extensions** > `wso2-readonly`
-            gh:OrganizationAndTeam[] permanent_default_organizations_and_teams = [
-                {orgName: "wso2-support", teamSlug: "wso2-support-readonly"},
-                {orgName: "wso2", teamSlug: "wso2-readonly"},
-                {orgName: "wso2-extensions", teamSlug: "wso2-readonly"}
-            ];
+        if employee.employmentType is PERMANENT {
 
             gh:AddOrUpdateTeamMemberInformationInput[] inputs
-                = from gh:OrganizationAndTeam organizationAndTeam in permanent_default_organizations_and_teams
+                = from gh:OrganizationAndTeam organizationAndTeam in gh:PERMANENT_DEFAULT_TEAM_ACCESS
                 select {
                     orgName: organizationAndTeam.orgName,
                     teamSlug: organizationAndTeam.teamSlug,
                     userName: gitHubUserName,
-                    role: "member"
+                    role: gh:MEMBER
                 };
 
             result = gh:addOrUpdateTeamMemberships(inputs);
 
-            if employee.department is "CUSTOMER SUCCESS" {
-                // - **wso2-cs** > `cs-team`
-                // - **wso2-enterprise** > `customer-success-team`
-                gh:OrganizationAndTeam[] cs_organizations_and_teams = [
-                    {orgName: "wso2-cs", teamSlug: "cs-team"},
-                    {orgName: "wso2-enterprise", teamSlug: "customer-success-team"}
-                ];
+            if employee.department is CUSTOMER_SUCCESS_DEPARTMENT {
 
                 gh:AddOrUpdateTeamMemberInformationInput[] cs_inputs
-                    = from gh:OrganizationAndTeam organizationAndTeam in cs_organizations_and_teams
+                    = from gh:OrganizationAndTeam organizationAndTeam in gh:CS_TEAM_ACCESS
                     select {
                         orgName: organizationAndTeam.orgName,
                         teamSlug: organizationAndTeam.teamSlug,
                         userName: gitHubUserName,
-                        role: "member"
+                        role: gh:MEMBER
                     };
 
                 result = gh:addOrUpdateTeamMemberships(cs_inputs);
             }
         }
 
-        if employee.employmentType is "Internship" {
-            // - **wso2-support** > `wso2-all-interns`
-            // - **wso2** > `wso2-all-interns`
-            // - **wso2-extensions** > `wso2-all-interns`
-            // - **ballerina-platform** > `wso2-all-interns`
-            string[] interns_default_organizations = ["wso2-support", "wso2", "wso2-extensions", "ballerina-platform"];
-            string interns_default_team_slug = "wso2-all-interns";
+        if employee.employmentType is INTERNSHIP {
             gh:AddOrUpdateTeamMemberInformationInput[] inputs
-                = from string organization in interns_default_organizations
+                = from string organization in gh:INTERNS_DEFAULT_ORGANIZATIONS
                 select {
                     orgName: organization,
-                    teamSlug: interns_default_team_slug,
+                    teamSlug: WSO2_ALL_INTERNS_TEAM_SLUG,
                     userName: gitHubUserName,
-                    role: "member"
+                    role: gh:MEMBER
                 };
 
             result = gh:addOrUpdateTeamMemberships(inputs);
