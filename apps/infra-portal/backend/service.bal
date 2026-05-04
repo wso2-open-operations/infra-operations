@@ -1816,11 +1816,9 @@ service http:InterceptableService / on new http:Listener(8090) {
                     role: gh:MEMBER
                 };
 
-            result = gh:addOrUpdateTeamMemberships(inputs);
-
             if employee.department is CUSTOMER_SUCCESS_DEPARTMENT {
 
-                gh:AddOrUpdateTeamMemberInformationInput[] cs_inputs
+                gh:AddOrUpdateTeamMemberInformationInput[] customerSuccessInputs
                     = from gh:OrganizationAndTeam organizationAndTeam in gh:CS_TEAM_ACCESS
                     select {
                         orgName: organizationAndTeam.orgName,
@@ -1829,8 +1827,11 @@ service http:InterceptableService / on new http:Listener(8090) {
                         role: gh:MEMBER
                     };
 
-                result = gh:addOrUpdateTeamMemberships(cs_inputs);
+                inputs.push(...customerSuccessInputs);
             }
+
+            result = gh:addOrUpdateTeamMemberships(inputs);
+
         }
 
         if employee.employmentType is INTERNSHIP {
