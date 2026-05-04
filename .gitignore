@@ -47,7 +47,6 @@ package-lock.json
 *.ipr
 *.iws
 .DS_Store
-.vscode
 .classpath
 .project
 .settings
