@@ -305,6 +305,12 @@ public type AddTeamsResult record {|
 
 # Member permission levels.
 public enum MemberRole {
+    MEMBER = "member",
+    MAINTAINER = "maintainer"
+};
+
+# Role filter for listing team members.  
+public enum MemberRoleFilter {
     ALL_ROLES = "all",
     MEMBER = "member",
     MAINTAINER = "maintainer"
@@ -421,7 +427,7 @@ public type FineGrainedAccessToken record {
     # Whether the token is expired
     boolean token_expired;
     # Expiration time of the token
-    string? token_expires_at = ();
+    string? token_expires_at;
     # Permissions associated with the token
     json permissions;
 };
