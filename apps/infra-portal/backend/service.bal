@@ -135,7 +135,8 @@ service http:InterceptableService / on new http:Listener(8090) {
     #
     # + ctx - Request object
     # + return - Employee information | Error
-    resource function get employee\-info(http:RequestContext ctx, string email) returns entity:Employee|http:NotFound|http:InternalServerError {
+    resource function get employee\-info(http:RequestContext ctx, string email)
+        returns entity:Employee|http:Forbidden|http:NotFound|http:InternalServerError {
 
         // User information header.
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
@@ -143,6 +144,14 @@ service http:InterceptableService / on new http:Listener(8090) {
             return <http:InternalServerError>{
                 body: {
                     message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
                 }
             };
         }
@@ -176,7 +185,26 @@ service http:InterceptableService / on new http:Listener(8090) {
     #
     # + ctx - Request object
     # + return - List  of employees | Error
-    resource function get employees(http:RequestContext ctx) returns entity:EmployeeBasic[]|http:InternalServerError {
+    resource function get employees(http:RequestContext ctx)
+        returns entity:EmployeeBasic[]|http:Forbidden|http:InternalServerError {
+
+        // interceptor set this value after validating the jwt.
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
+                }
+            };
+        }
 
         // Check if the employees are already cached.
         if cache.hasKey(EMPLOYEES_CACHE_KEY) {
