@@ -426,13 +426,15 @@ public isolated function getFinegrainedAccessTokens() returns FineGrainedAccessT
 # API Call to get the teams of the organization.
 #
 # + orgName - Organization name
+# + perPage - Number of teams to return per page
+# + page - Page number of the results
 # + return - List of teams or error
-public isolated function getTeamsForOrganization(string orgName) returns GitHubTeam[]|error {
+public isolated function getTeamsForOrganization(string orgName, int page, int perPage) returns GitHubTeam[]|error {
     http:Client|error githubClient = createGithubClient();
     if githubClient is error {
         return githubClient;
     }
-    return githubClient->/orgs/[orgName]/teams.get();
+    return githubClient->/orgs/[orgName]/teams.get(perPage = perPage, page = page);
 }
 
 # API Call to add or update team membership for multiple users.

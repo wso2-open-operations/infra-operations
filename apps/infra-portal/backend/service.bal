@@ -1686,8 +1686,9 @@ service http:InterceptableService / on new http:Listener(8090) {
     #
     # + id - Organization ID
     # + return - List of GitHub teams or error
-    isolated resource function get organizations/[int id]/github\-teams(http:RequestContext ctx)
-        returns gh:GitHubTeam[]|http:Forbidden|http:InternalServerError {
+    isolated resource function get
+        organizations/[int id]/github\-teams(http:RequestContext ctx, int page = 1, int perPage = gh:DEFAULT_LIMIT)
+            returns gh:GitHubTeam[]|http:Forbidden|http:InternalServerError {
 
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
@@ -1717,7 +1718,7 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
 
-        gh:GitHubTeam[]|error teams = gh:getTeamsForOrganization(organization.organizationName);
+        gh:GitHubTeam[]|error teams = gh:getTeamsForOrganization(organization.organizationName, page, perPage);
         if teams is error {
             string customError = "Error while fetching teams for organization: ";
             log:printError(customError, teams, organizationName = organization.organizationName);
