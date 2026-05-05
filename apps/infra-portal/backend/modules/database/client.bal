@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerinax/java.jdbc;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
 
@@ -31,8 +30,5 @@ DatabaseClientConfig databaseClientConfig = {
     }
 };
 
-function initSampleDbClient() returns mysql:Client|error
-=> new (...databaseClientConfig);
-
 # Database Client.
-final jdbc:Client databaseClient = check initSampleDbClient();
+final mysql:Client databaseClient = check new (...databaseClientConfig);
