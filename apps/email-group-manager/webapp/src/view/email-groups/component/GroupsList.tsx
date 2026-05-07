@@ -92,17 +92,14 @@ function GroupsList({
 
     try {
       setBulkSubscribeLoading(true);
-      const results = await Promise.allSettled(
-        selectedUnsubscribedGroups.map((group) =>
-          dispatch(subscribeGroup(group)).unwrap(),
-        ),
-      );
-
-      selectedUnsubscribedGroups.forEach((group, index) => {
-        if (results[index].status === "fulfilled") {
+      for (const group of selectedUnsubscribedGroups) {
+        try {
+          await dispatch(subscribeGroup(group)).unwrap();
           dispatch(addNewGroup(group));
+        } catch (error) {
+          console.error(`Failed to subscribe to ${group}:`, error);
         }
-      });
+      }
     } finally {
       setBulkSubscribeLoading(false);
     }
@@ -115,17 +112,14 @@ function GroupsList({
 
     try {
       setBulkUnsubscribeLoading(true);
-      const results = await Promise.allSettled(
-        selectedSubscribedGroups.map((group) =>
-          dispatch(unsubscribeGroup(group)).unwrap(),
-        ),
-      );
-
-      selectedSubscribedGroups.forEach((group, index) => {
-        if (results[index].status === "fulfilled") {
+      for (const group of selectedSubscribedGroups) {
+        try {
+          await dispatch(unsubscribeGroup(group)).unwrap();
           dispatch(removeExistingGroup(group));
+        } catch (error) {
+          console.error(`Failed to unsubscribe from ${group}:`, error);
         }
-      });
+      }
     } finally {
       setBulkUnsubscribeLoading(false);
     }

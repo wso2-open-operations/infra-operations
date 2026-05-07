@@ -59,9 +59,7 @@ const userGroupsSlice = createSlice({
   initialState,
   reducers: {
     addNewGroup: (state, action) => {
-      if (!state.groups.includes(action.payload)) {
-        state.groups.push(action.payload);
-      }
+      state.groups.push(action.payload);
     },
     removeExistingGroup: (state, action) => {
       state.groups = state.groups.filter((group) => group !== action.payload);
