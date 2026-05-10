@@ -25,11 +25,14 @@ import {
   Popover,
   Select,
   TextField,
+  Tooltip,
   Typography,
+  alpha,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { Field, Form, Formik } from "formik";
-import { Plus, User } from "lucide-react";
+import { Pencil, Plus, Trash2, User } from "lucide-react";
 import * as Yup from "yup";
 
 import { useEffect, useState } from "react";
@@ -38,7 +41,7 @@ import { ConfirmationType, State } from "@/types/types";
 import BackgroundLoader from "@component/common/BackgroundLoader";
 import ErrorHandler from "@component/common/ErrorHandler";
 import { useConfirmationModalContext } from "@root/src/context";
-import TableContent from "@root/src/view/admin/github-settings/tables/TableContent";
+import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 import {
   DefaultTeam,
   addDefaultTeam,
@@ -49,12 +52,6 @@ import {
 import { useAppDispatch, useAppSelector } from "@slices/store";
 
 import { CardHeader } from "../CardHeader";
-import { GridHeader } from "../GridHeaders";
-import { SkeletonRows } from "../SkeletonRow";
-import { TeamRow } from "./TeamRow";
-
-const GRID_COLUMNS = "36px 1fr 100px 52px";
-const COLUMN_HEADERS = ["ID", "Team Name", "Permission", "Actions"];
 
 const DefaultTeamSchema = Yup.object().shape({
   teamName: Yup.string().required("Required"),
@@ -135,6 +132,145 @@ export default function DefaultTeamTable({ gridArea }: { gridArea?: string }) {
     );
   };
 
+  function PermissionPill({ level }: { level: string }) {
+    let color = theme.palette.primary.main;
+    let bg = alpha(theme.palette.primary.main, 0.12);
+
+    switch (level) {
+      case "push":
+        color = theme.palette.warning.main;
+        bg = alpha(theme.palette.warning.main, 0.12);
+        break;
+      case "pull":
+        color = theme.palette.info.main;
+        bg = alpha(theme.palette.info.main, 0.12);
+        break;
+      case "triage":
+        color = theme.palette.warning.dark;
+        bg = alpha(theme.palette.warning.dark, 0.12);
+        break;
+      case "admin":
+        color = theme.palette.error.main;
+        bg = alpha(theme.palette.error.main, 0.12);
+        break;
+    }
+
+    return (
+      <Box
+        sx={{
+          fontSize: 11,
+          fontWeight: 600,
+          fontFamily: "monospace",
+          px: 0.75,
+          py: 0.2,
+          borderRadius: "4px",
+          background: bg,
+          color,
+          width: "fit-content",
+        }}
+      >
+        {level}
+      </Box>
+    );
+  }
+
+  const columns: GridColDef[] = [
+    {
+      field: "teamId",
+      headerName: "ID",
+      width: 60,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 10,
+            fontFamily: "monospace",
+            color: theme.palette.customText.primary.p3.active,
+          }}
+        >
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "teamName",
+      headerName: "Team Name",
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            fontFamily: "monospace",
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "permissionLevel",
+      headerName: "Permission",
+      width: 120,
+      renderCell: (params) => <PermissionPill level={params.value} />,
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 100,
+      sortable: false,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 0.375,
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
+          <Tooltip title="Edit" arrow>
+            <IconButton
+              size="small"
+              onClick={() => setEditTarget(params.row)}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.warning.main,
+                  background: alpha(theme.palette.warning.main, 0.1),
+                },
+              }}
+            >
+              <Pencil size={13} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete" arrow>
+            <IconButton
+              size="small"
+              onClick={() => handleDelete(params.row.teamId, params.row.teamName)}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.error.main,
+                  background: alpha(theme.palette.error.main, 0.1),
+                },
+              }}
+            >
+              <Trash2 size={13} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   if (defaultTeamsState.state === State.failed && !defaultTeamsState.defaultTeams) {
     return <ErrorHandler message="Failed to fetch default teams." />;
   }
@@ -147,7 +283,6 @@ export default function DefaultTeamTable({ gridArea }: { gridArea?: string }) {
     <Box sx={{ gridArea }}>
       <BackgroundLoader open={isMutating} message={defaultTeamsState.errorMessage} />
 
-      {/* Card container */}
       <Box
         sx={{
           background:
@@ -163,7 +298,6 @@ export default function DefaultTeamTable({ gridArea }: { gridArea?: string }) {
               : "0 1px 3px rgba(0,0,0,0.06)",
         }}
       >
-        {/* Card header */}
         <CardHeader
           icon={<User size={15} />}
           itemCount={teams.length}
@@ -186,29 +320,14 @@ export default function DefaultTeamTable({ gridArea }: { gridArea?: string }) {
           }
         />
 
-        {/* Grid header */}
-        <GridHeader gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
-
-        {/* Team list */}
-        <TableContent
-          isEmpty={!isFetching && teams.length === 0}
-          emptyMessage="No default teams configured."
-        >
-          {isFetching || !defaultTeamsState.defaultTeams ? (
-            <SkeletonRows gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
-          ) : (
-            teams.map((team, idx) => (
-              <TeamRow
-                key={team.teamId}
-                gridTemplateColumns={GRID_COLUMNS}
-                team={team}
-                isLast={idx === teams.length - 1}
-                onEdit={setEditTarget}
-                onDelete={handleDelete}
-              />
-            ))
-          )}
-        </TableContent>
+        <Box sx={{ width: "100%", height: 400 }}>
+          <CustomDataGrid
+            rows={teams}
+            columns={columns}
+            getRowId={(row) => row.teamId}
+            loading={isFetching}
+          />
+        </Box>
       </Box>
 
       {/* Add team popover */}
