@@ -6,17 +6,21 @@ import {
   IconButton,
   Popover,
   TextField,
+  Tooltip,
   Typography,
-  useTheme,
+  alpha,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { GridColDef } from "@mui/x-data-grid";
 import { Field, Form, Formik } from "formik";
-import { Plus, User } from "lucide-react";
+import { Pencil, Plus, Trash2, User } from "lucide-react";
 import * as Yup from "yup";
 
 import { useEffect, useState } from "react";
 
-import BackgroundLoader from "@root/src/component/common/BackgroundLoader";
-import ErrorHandler from "@root/src/component/common/ErrorHandler";
+import { ConfirmationType, State } from "@/types/types";
+import BackgroundLoader from "@component/common/BackgroundLoader";
+import ErrorHandler from "@component/common/ErrorHandler";
 import { useConfirmationModalContext } from "@root/src/context";
 import {
   AddLeadPayload,
@@ -27,13 +31,9 @@ import {
   updateLead,
 } from "@root/src/slices/leadsSlice/leads";
 import { useAppDispatch, useAppSelector } from "@root/src/slices/store";
-import { ConfirmationType, State } from "@root/src/types/types";
-import TableContent from "@root/src/view/admin/github-settings/tables/TableContent";
+import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 
 import { CardHeader } from "../CardHeader";
-import { GridHeader } from "../GridHeaders";
-import { SkeletonRows } from "../SkeletonRow";
-import { LeadRow } from "./LeadRow";
 
 const LeadSchema = Yup.object().shape({
   leadEmail: Yup.string()
@@ -42,9 +42,6 @@ const LeadSchema = Yup.object().shape({
     .required("Required"),
   teamName: Yup.string().required("Required"),
 });
-
-const GRID_COLUMNS = "36px 1fr 1fr 52px";
-const COLUMN_HEADERS = ["ID", "Lead Email", "Team", "Actions"];
 
 export default function FunctionalLeads({ gridArea }: { gridArea?: string }) {
   const theme = useTheme();
@@ -128,6 +125,113 @@ export default function FunctionalLeads({ gridArea }: { gridArea?: string }) {
     );
   };
 
+  const columns: GridColDef[] = [
+    {
+      field: "leadId",
+      headerName: "ID",
+      width: 60,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 10,
+            fontFamily: "monospace",
+            color: theme.palette.customText.primary.p3.active,
+          }}
+        >
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "leadEmail",
+      headerName: "Lead Email",
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            fontFamily: "monospace",
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "teamName",
+      headerName: "Team",
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            fontFamily: "monospace",
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 100,
+      sortable: false,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 0.375,
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
+          <Tooltip title="Edit" arrow>
+            <IconButton
+              size="small"
+              onClick={() => setEditTarget(params.row)}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.warning.main,
+                  background: alpha(theme.palette.warning.main, 0.1),
+                },
+              }}
+            >
+              <Pencil size={13} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete" arrow>
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteLead(params.row.leadId, params.row.leadEmail)}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.error.main,
+                  background: alpha(theme.palette.error.main, 0.1),
+                },
+              }}
+            >
+              <Trash2 size={13} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   const isLoading = leadsState.state === State.loading;
   const isFetching = leadsState.functionType === "fetch";
   const isMutating = isLoading && !isFetching && !!leadsState.leads;
@@ -154,7 +258,6 @@ export default function FunctionalLeads({ gridArea }: { gridArea?: string }) {
               : "0 1px 3px rgba(0,0,0,0.06)",
         }}
       >
-        {/* Card header */}
         <CardHeader
           icon={<User size={15} />}
           itemCount={leads.length}
@@ -177,29 +280,14 @@ export default function FunctionalLeads({ gridArea }: { gridArea?: string }) {
           }
         />
 
-        {/* Grid header */}
-        <GridHeader gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
-
-        {/* Team list (scrollable) */}
-        <TableContent
-          isEmpty={!isFetching && leads.length === 0}
-          emptyMessage="No functional leads configured."
-        >
-          {isFetching || !leadsState.leads ? (
-            <SkeletonRows gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
-          ) : (
-            leads.map((lead, idx) => (
-              <LeadRow
-                key={lead.leadId}
-                gridTemplateColumns={GRID_COLUMNS}
-                lead={lead}
-                isLast={idx === leads.length - 1}
-                onEdit={setEditTarget}
-                onDelete={handleDeleteLead}
-              />
-            ))
-          )}
-        </TableContent>
+        <Box sx={{ width: "100%", height: 400 }}>
+          <CustomDataGrid
+            rows={leads}
+            columns={columns}
+            getRowId={(row) => row.leadId}
+            loading={isFetching}
+          />
+        </Box>
       </Box>
 
       {/* Add lead popover */}

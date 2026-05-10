@@ -6,11 +6,14 @@ import {
   IconButton,
   Popover,
   TextField,
+  Tooltip,
   Typography,
-  useTheme,
+  alpha,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { GridColDef } from "@mui/x-data-grid";
 import { Field, Form, Formik } from "formik";
-import { Plus, User } from "lucide-react";
+import { Pencil, Plus, Trash2, User } from "lucide-react";
 import * as Yup from "yup";
 
 import { useEffect, useState } from "react";
@@ -28,19 +31,13 @@ import {
   updateTopic,
 } from "@root/src/slices/topicsSlice/topics";
 import { ConfirmationType, State } from "@root/src/types/types";
+import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 
 import { CardHeader } from "../CardHeader";
-import { GridHeader } from "../GridHeaders";
-import { SkeletonRows } from "../SkeletonRow";
-import TableContent from "../TableContent";
-import { TopicRow } from "./TopicRow";
 
 const TopicSchema = Yup.object().shape({
   topicName: Yup.string().required("Topic name is required"),
 });
-
-const GRID_COLUMNS = "36px 1fr 52px";
-const COLUMN_HEADERS = ["ID", "Topic Name", "Actions"];
 
 export default function RepositoryTopicsTable({ gridArea }: { gridArea?: string }) {
   const theme = useTheme();
@@ -115,12 +112,105 @@ export default function RepositoryTopicsTable({ gridArea }: { gridArea?: string 
     );
   };
 
+  const columns: GridColDef[] = [
+    {
+      field: "topicId",
+      headerName: "ID",
+      width: 60,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 10,
+            fontFamily: "monospace",
+            color: theme.palette.customText.primary.p3.active,
+          }}
+        >
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "topicName",
+      headerName: "Topic Name",
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            fontFamily: "monospace",
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 100,
+      sortable: false,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 0.375,
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
+          <Tooltip title="Edit" arrow>
+            <IconButton
+              size="small"
+              onClick={() => setEditTarget(params.row)}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.warning.main,
+                  background: alpha(theme.palette.warning.main, 0.1),
+                },
+              }}
+            >
+              <Pencil size={13} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete" arrow>
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteTopic(params.row.topicId, params.row.topicName)}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.error.main,
+                  background: alpha(theme.palette.error.main, 0.1),
+                },
+              }}
+            >
+              <Trash2 size={13} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   const isLoading = topicsState.state === State.loading;
   const isFetching = topicsState.functionType === "fetch";
   const isMutating = isLoading && !isFetching && !!topicsState.topics;
+
   if (topicsState.state === State.failed) {
     return <ErrorHandler message="Failed to fetch topics." />;
   }
+
   return (
     <Box sx={{ gridArea }}>
       <BackgroundLoader open={isMutating} message={topicsState.errorMessage} />
@@ -160,30 +250,17 @@ export default function RepositoryTopicsTable({ gridArea }: { gridArea?: string 
             </IconButton>
           }
         />
-        {/* Grid header */}
-        <GridHeader gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
 
-        {/* Topics list (scrollable) */}
-        <TableContent
-          isEmpty={!isFetching && topics.length === 0}
-          emptyMessage="No functional leads configured."
-        >
-          {isFetching || !topicsState.topics ? (
-            <SkeletonRows gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
-          ) : (
-            topics.map((topic, idx) => (
-              <TopicRow
-                key={topic.topicId}
-                gridTemplateColumns={GRID_COLUMNS}
-                topic={topic}
-                isLast={idx === topics.length - 1}
-                onEdit={setEditTarget}
-                onDelete={handleDeleteTopic}
-              />
-            ))
-          )}
-        </TableContent>
+        <Box sx={{ width: "100%", height: 400 }}>
+          <CustomDataGrid
+            rows={topics}
+            columns={columns}
+            getRowId={(row) => row.topicId}
+            loading={isFetching}
+          />
+        </Box>
       </Box>
+
       {/* Add topic popover */}
       <Popover
         open={Boolean(addAnchorEl)}

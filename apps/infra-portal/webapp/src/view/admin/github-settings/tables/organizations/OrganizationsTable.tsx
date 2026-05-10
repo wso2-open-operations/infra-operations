@@ -14,10 +14,12 @@ import {
   TextField,
   Tooltip,
   Typography,
+  alpha,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { GridColDef } from "@mui/x-data-grid";
 import { Field, Form, Formik } from "formik";
-import { Plus, User } from "lucide-react";
+import { Pencil, Plus, RefreshCw, Trash2, User } from "lucide-react";
 import * as Yup from "yup";
 
 import { useEffect, useState } from "react";
@@ -39,29 +41,15 @@ import {
 } from "@root/src/slices/organizationsSlice/organizations";
 import { useAppDispatch, useAppSelector } from "@root/src/slices/store";
 import { ConfirmationType, State } from "@root/src/types/types";
+import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 
 import { CardHeader } from "../CardHeader";
-import { GridHeader } from "../GridHeaders";
-import { SkeletonRows } from "../SkeletonRow";
-import TableContent from "../TableContent";
-import { OrganizationRow } from "./OrganizationRow";
 
 const OrganizationSchema = Yup.object().shape({
   organizationName: Yup.string().required("Organization name is required"),
   organizationVisibility: Yup.string().required("Visibility is required"),
   defaultTeams: Yup.array().of(Yup.number()).min(0),
 });
-
-const GRID_COLUMNS = "36px 1fr 0.25fr 52px 2fr 100px 52px";
-const COLUMN_HEADERS = [
-  "ID",
-  "Organization Name",
-  "Visibility",
-  "Plan",
-  "Default Teams",
-  "Allow Issues",
-  "Actions",
-];
 
 type OrganizationFormValues = {
   organizationName: string;
@@ -253,6 +241,180 @@ export default function OrganizationsTable({ gridArea }: { gridArea?: string }) 
   const isFetching = organizationsState.functionType === "fetch";
   const isMutating = isLoading && !isFetching && !!organizationsState.organizations;
 
+  const columns: GridColDef[] = [
+    {
+      field: "organizationId",
+      headerName: "ID",
+      width: 60,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 10,
+            color: theme.palette.customText.primary.p3.active,
+          }}
+        >
+          #{params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "organizationName",
+      headerName: "Organization Name",
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "organizationVisibility",
+      headerName: "Visibility",
+      width: 100,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "organizationPlan",
+      headerName: "Plan",
+      width: 80,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "defaultTeams",
+      headerName: "Default Teams",
+      flex: 1.5,
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value || "No default teams"}
+        </Typography>
+      ),
+    },
+    {
+      field: "enableIssues",
+      headerName: "Allow Issues",
+      width: 100,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: theme.palette.customText.primary.p1.active,
+          }}
+        >
+          {params.value ? "Yes" : "No"}
+        </Typography>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 120,
+      sortable: false,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 0.375,
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
+          <Tooltip title="Edit" arrow>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setCurrentOrganizationId(params.row.organizationId);
+                setOpenEditOrganizationDialog(true);
+              }}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.warning.main,
+                  background: alpha(theme.palette.warning.main, 0.1),
+                },
+              }}
+            >
+              <Pencil size={13} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete" arrow>
+            <IconButton
+              size="small"
+              onClick={() =>
+                handleDeleteOrganization(params.row.organizationId, params.row.organizationName)
+              }
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.error.main,
+                  background: alpha(theme.palette.error.main, 0.1),
+                },
+              }}
+            >
+              <Trash2 size={13} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Sync" arrow>
+            <IconButton
+              size="small"
+              onClick={() => handleSyncOrganization(params.row.organizationName)}
+              sx={{
+                width: 26,
+                height: 26,
+                borderRadius: "6px",
+                color: theme.palette.customText.primary.p3.active,
+                "&:hover": {
+                  color: theme.palette.warning.main,
+                  background: alpha(theme.palette.warning.main, 0.1),
+                },
+              }}
+            >
+              <RefreshCw size={13} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   if (organizationsState.state === State.failed) {
     return <ErrorHandler message={organizationsState.errorMessage} />;
   }
@@ -301,31 +463,14 @@ export default function OrganizationsTable({ gridArea }: { gridArea?: string }) 
           }
         />
 
-        <GridHeader gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
-
-        <TableContent
-          isEmpty={!isFetching && organizations.length === 0}
-          emptyMessage="No organizations configured."
-        >
-          {isFetching || !organizationsState.organizations ? (
-            <SkeletonRows gridTemplateColumns={GRID_COLUMNS} headers={COLUMN_HEADERS} />
-          ) : (
-            organizations.map((organization, idx) => (
-              <OrganizationRow
-                key={organization.organizationId}
-                gridTemplateColumns={GRID_COLUMNS}
-                organization={organization}
-                isLast={idx === organizations.length - 1}
-                onEdit={(org) => {
-                  setCurrentOrganizationId(org.organizationId);
-                  setOpenEditOrganizationDialog(true);
-                }}
-                onDelete={handleDeleteOrganization}
-                onSync={handleSyncOrganization}
-              />
-            ))
-          )}
-        </TableContent>
+        <Box sx={{ width: "100%", height: 400 }}>
+          <CustomDataGrid
+            rows={organizations}
+            columns={columns}
+            getRowId={(row) => row.organizationId}
+            loading={isFetching}
+          />
+        </Box>
       </Box>
 
       {/* ── Add Organization Popover ── */}
@@ -434,13 +579,15 @@ export default function OrganizationsTable({ gridArea }: { gridArea?: string }) 
                       value={values.enableIssues ? "true" : "false"}
                       name="enableIssues"
                       label="Allow Issues"
+                      onChange={(e) =>
+                        setFieldValue(
+                          "enableIssues",
+                          (e.target as unknown as { value: string }).value === "true",
+                        )
+                      }
                     >
-                      <MenuItem value="true" onClick={() => setFieldValue("enableIssues", true)}>
-                        Yes
-                      </MenuItem>
-                      <MenuItem value="false" onClick={() => setFieldValue("enableIssues", false)}>
-                        No
-                      </MenuItem>
+                      <MenuItem value="true">Yes</MenuItem>
+                      <MenuItem value="false">No</MenuItem>
                     </Select>
                   </FormControl>
 
