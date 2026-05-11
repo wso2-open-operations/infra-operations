@@ -14,7 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 import { GitHub } from "@mui/icons-material";
-import { HomeIcon, Shield, ShieldUser } from "lucide-react";
+import {
+  BookKey,
+  BookMarked,
+  ClipboardList,
+  Eye,
+  HomeIcon,
+  Settings,
+  Shield,
+  ShieldUser,
+} from "lucide-react";
 import { CircleQuestionMark } from "lucide-react";
 import type { RouteObject } from "react-router-dom";
 
@@ -60,28 +69,28 @@ export const routes: RouteObjectWithRole[] = [
       {
         path: "repository-requests",
         text: "Repository Requests",
-        icon: React.createElement(CircleQuestionMark),
+        icon: React.createElement(BookMarked),
         element: React.createElement(View.nestedPage),
         allowRoles: [Role.EMPLOYEE],
       },
       {
         path: "repository-access-requests",
         text: "Repository Access Requests",
-        icon: React.createElement(CircleQuestionMark),
+        icon: React.createElement(BookKey),
         element: React.createElement(View.nestedPage),
         allowRoles: [Role.EMPLOYEE],
       },
       {
         path: "my-requests",
         text: "My Requests",
-        icon: React.createElement(CircleQuestionMark),
+        icon: React.createElement(ClipboardList),
         element: React.createElement(View.nestedPage),
         allowRoles: [Role.EMPLOYEE],
       },
       {
         path: "review-repository-requests",
         text: "Review Repository Requests",
-        icon: React.createElement(CircleQuestionMark),
+        icon: React.createElement(Eye),
         element: React.createElement(View.nestedPage),
         allowRoles: [Role.ADMIN, Role.APPROVER],
       },
@@ -97,7 +106,7 @@ export const routes: RouteObjectWithRole[] = [
       {
         path: "github-settings",
         text: "GitHub Settings",
-        icon: React.createElement(CircleQuestionMark),
+        icon: React.createElement(Settings),
         element: React.createElement(View.githubSettings),
         allowRoles: [Role.ADMIN],
       },
