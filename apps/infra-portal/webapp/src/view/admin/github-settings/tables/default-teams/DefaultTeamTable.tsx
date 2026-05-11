@@ -41,7 +41,6 @@ import { ConfirmationType, State } from "@/types/types";
 import BackgroundLoader from "@component/common/BackgroundLoader";
 import ErrorHandler from "@component/common/ErrorHandler";
 import { useConfirmationModalContext } from "@root/src/context";
-import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 import {
   DefaultTeam,
   addDefaultTeam,
@@ -52,6 +51,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@slices/store";
 
 import { CardHeader } from "../CardHeader";
+import CustomDataGrid from "../CustomDataGrid";
 
 const DefaultTeamSchema = Yup.object().shape({
   teamName: Yup.string().required("Required"),

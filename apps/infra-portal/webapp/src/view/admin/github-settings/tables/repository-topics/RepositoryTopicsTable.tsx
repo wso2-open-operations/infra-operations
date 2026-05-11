@@ -46,9 +46,9 @@ import {
   updateTopic,
 } from "@root/src/slices/topicsSlice/topics";
 import { ConfirmationType, State } from "@root/src/types/types";
-import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 
 import { CardHeader } from "../CardHeader";
+import CustomDataGrid from "../CustomDataGrid";
 
 const TopicSchema = Yup.object().shape({
   topicName: Yup.string().required("Topic name is required"),
