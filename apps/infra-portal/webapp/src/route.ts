@@ -91,14 +91,14 @@ export const routes: RouteObjectWithRole[] = [
     path: "admin",
     text: "Admin",
     icon: React.createElement(ShieldUser),
-    element: React.createElement(View.nestedPage),
+    element: React.createElement(View.admin),
     allowRoles: [Role.ADMIN],
     children: [
       {
         path: "github-settings",
         text: "GitHub Settings",
         icon: React.createElement(CircleQuestionMark),
-        element: React.createElement(View.nestedPage),
+        element: React.createElement(View.githubSettings),
         allowRoles: [Role.ADMIN],
       },
     ],
