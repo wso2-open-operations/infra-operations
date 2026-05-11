@@ -30,7 +30,7 @@ import {
   alpha,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { GridColDef } from "@mui/x-data-grid";
 import { Field, Form, Formik } from "formik";
 import { Pencil, Plus, Trash2, User } from "lucide-react";
 import * as Yup from "yup";
