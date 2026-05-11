@@ -56,9 +56,9 @@ import {
 } from "@root/src/slices/organizationsSlice/organizations";
 import { useAppDispatch, useAppSelector } from "@root/src/slices/store";
 import { ConfirmationType, State } from "@root/src/types/types";
-import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 
 import { CardHeader } from "../CardHeader";
+import CustomDataGrid from "../CustomDataGrid";
 
 const OrganizationSchema = Yup.object().shape({
   organizationName: Yup.string().required("Organization name is required"),

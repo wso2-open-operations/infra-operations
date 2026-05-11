@@ -13,7 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { useTheme } from "@mui/material";
+import { alpha, useTheme } from "@mui/material";
 import { DataGrid, DataGridProps, GridValidRowModel } from "@mui/x-data-grid";
 
 export default function CustomDataGrid<R extends GridValidRowModel>(props: DataGridProps<R>) {
@@ -66,6 +66,20 @@ export default function CustomDataGrid<R extends GridValidRowModel>(props: DataG
         },
         "& .MuiDataGrid-filler": {
           display: "none",
+        },
+        "& ::-webkit-scrollbar": {
+          width: "6px",
+          height: "6px",
+        },
+        "& ::-webkit-scrollbar-track": {
+          background: "transparent",
+        },
+        "& ::-webkit-scrollbar-thumb": {
+          background: alpha(theme.palette.divider, 0.5),
+          borderRadius: "3px",
+        },
+        "& ::-webkit-scrollbar-thumb:hover": {
+          background: alpha(theme.palette.divider, 0.7),
         },
         ...props.sx,
       }}

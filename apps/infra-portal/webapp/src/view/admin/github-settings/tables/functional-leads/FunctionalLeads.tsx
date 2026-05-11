@@ -46,9 +46,9 @@ import {
   updateLead,
 } from "@root/src/slices/leadsSlice/leads";
 import { useAppDispatch, useAppSelector } from "@root/src/slices/store";
-import CustomDataGrid from "@root/src/view/admin/github-settings/tables/CustomDataGrid";
 
 import { CardHeader } from "../CardHeader";
+import CustomDataGrid from "../CustomDataGrid";
 
 const LeadSchema = Yup.object().shape({
   leadEmail: Yup.string()
