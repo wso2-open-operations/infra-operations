@@ -188,24 +188,6 @@ sequenceDiagram
 
 ---
 
-## Why This Product Exists
-
-Reviewing raw audit logs directly is difficult, especially when monitoring multiple machines.
-
-The File Integrity Monitor product solves that problem by turning fragmented system-level records into a centralized and readable monitoring flow.
-
-Instead of manually checking raw logs across many servers, teams can use this product to:
-
-* Detect important file changes
-* Preserve change evidence
-* Centralize records from many hosts
-* Investigate changes through a dashboard
-* Support troubleshooting, operational audits, and forensic review
-
-This makes the product useful both for day-to-day operations and for security-focused investigations.
-
----
-
 ## Core Product Capabilities
 
 ```mermaid
@@ -277,20 +259,6 @@ flowchart TB
 
 ---
 
-## Main Use Cases
-
-The File Integrity Monitor product is useful for:
-
-* Monitoring important file changes on Linux systems
-* Operational auditing
-* Evidence generation
-* Investigating unexpected modifications
-* Centralized visibility across multiple machines
-* Reviewing file diffs and related context
-* Exporting collected results for further analysis
-
----
-
 ## Product Summary
 
 The **File Integrity Monitor (FIM)** product combines **fim-agent** and **dashboard** into one complete monitoring solution.
@@ -306,7 +274,7 @@ Together, they provide a full pipeline from **file change detection** to **centr
 
 ```text
 file-integrity-monitor/
-├── fim-agent/
+├── agent/
 ├── dashboard/
 └── README.md
 ```
@@ -315,7 +283,81 @@ file-integrity-monitor/
 
 ## Detailed Documentation
 
-For component-level setup and implementation details, refer to:
+For component-level setup instructions, refer to the following documents:
 
-* `fim-agent/README.md`
-* `dashboard/README.md`
+- `agent/README.md`
+- `dashboard/README.md`
+
+## Deployment Documentation
+
+### Prerequisites
+
+Before configuring the `file-integrity-monitor` components, create and configure a shared S3 bucket.
+
+#### S3 Bucket and IAM Setup
+
+1. Create a common S3 bucket with an appropriate name and set the access permission to **Block all public access turns ON**.
+2. Create two separate IAM users:
+   - One IAM user for the Agent component
+   - One IAM user for the Dashboard component
+3. Store the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` for both users in a secure location.
+4. Attach the following IAM policy to the Agent-IAM user.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowUploaderToListBucketAndPutObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::<ENTER-YOUR-S3-BUCKET-NAME>",
+        "arn:aws:s3:::<ENTER-YOUR-S3-BUCKET-NAME>/*"
+      ]
+    }
+  ]
+}
+```
+
+5. Attach the following IAM policy to the Dashboard-IAM user.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowListBucket",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::<ENTER-YOUR-S3-BUCKET-NAME>"
+    },
+    {
+      "Sid": "AllowGetObject",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::<ENTER-YOUR-S3-BUCKET-NAME>/*"
+    },
+    {
+      "Sid": "AllowDeleteObject",
+      "Effect": "Allow",
+      "Action": "s3:DeleteObject",
+      "Resource": "arn:aws:s3:::<ENTER-YOUR-S3-BUCKET-NAME>/*"
+    }
+  ]
+}
+```
+
+## Component Installation
+
+Install and verify the Dashboard component first. After the Dashboard is running successfully, proceed with the Agent installation.
+
+Installation instructions are available in the following files:
+
+- `dashboard/INSTALL.md`
+- `agent/INSTALL.md`
+
+Follow these installation guides to deploy the `file-integrity-monitor` components.

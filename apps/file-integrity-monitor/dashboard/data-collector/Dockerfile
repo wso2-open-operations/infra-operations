@@ -37,4 +37,4 @@ RUN pip install --no-cache-dir boto3 mysql-connector-python \
     && chmod 644 /app/certs/ca.pem /app/certs/client-cert.pem
 
 # Run the main Python script
-CMD ["python", "S3toDB.py"]
+CMD ["python", "data-collector.py"]
