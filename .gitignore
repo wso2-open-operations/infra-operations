@@ -26,3 +26,7 @@ replay_pid*
 
 #.env
 .env
+# Configs and Environment files
+.DS_Store
+target
+Config.toml
