@@ -93,7 +93,9 @@ const githubConnectSlice = createSlice({
           state.githubUsername = githubUsername;
         } else {
           state.state = State.failed;
-          state.errorMessage = "No verified @wso2.com email found on your GitHub account.";
+          state.githubUserId = undefined;
+          state.githubUsername = undefined;
+          state.errorMessage = SnackMessage.error.githubUnverifiedMessage;
         }
       })
       .addCase(connectGitHub.rejected, (state, action) => {

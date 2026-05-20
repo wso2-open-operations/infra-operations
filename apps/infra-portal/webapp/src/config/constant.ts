@@ -99,6 +99,7 @@ export const SnackMessage = {
     fetchSecurityDashboardLinksMessage: "Unable to retrieve Security Dashboard links",
 
     githubConnectMessage: "Connection failed. Please try again.",
+    githubUnverifiedMessage: "No verified WSO2 email found on your GitHub account.",
   },
   warning: {},
 };
