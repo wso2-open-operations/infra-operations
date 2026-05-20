@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+import ballerina/data.jsondata;
 
 # [Configurable] OAuth2 entity application configuration.
 type Oauth2Config record {|
@@ -36,6 +37,56 @@ public type RestRetryConfig record {|
     float backOffFactor = RETRY_BACKOFF_FACTOR;
     # Retry max interval
     decimal maxWaitInterval = RETRY_MAX_INTERVAL;
+|};
+
+# GitHub OAuth application configuration.
+type GitHubOauthAppConfig record {|
+    # GitHub OAuth application client ID
+    string clientId;
+    # GitHub OAuth application client secret
+    string clientSecret;
+    # GitHub OAuth application callback URL
+    string redirectUri;
+    # GitHub OAuth application token URL
+    string githubTokenUrl;
+    # GitHub API base URL
+    string githubApiBaseUrl;
+|};
+
+type TokenExchangeRequest record {|
+    # The authorization code received from GitHub after user authorization
+    string code;
+    # The client ID of the GitHub OAuth application
+    @jsondata:Name {
+        value: "client_id"
+    }
+    string clientId;
+    # The client secret of the GitHub OAuth application
+    @jsondata:Name {
+        value: "client_secret"
+    }
+    string clientSecret;
+    # The redirect URI registered with the GitHub OAuth application
+    @jsondata:Name {
+        value: "redirect_uri"
+    }
+    string redirectUri;
+|};
+
+# Record to represent the response from GitHub when exchanging an authorization code for an access token.
+type TokenResponse record {|
+    # The access token issued by GitHub
+    @jsondata:Name {
+        value: "access_token"
+    }
+    string accessToken;
+    # The type of the token (e.g., "bearer")
+    @jsondata:Name {
+        value: "token_type"
+    }
+    string tokenType;
+    # The scope of the access token
+    string scope;
 |};
 
 # Record to represent a GitHub team.
@@ -452,3 +503,136 @@ public type FineGrainedAccessTokenResponse record {
     # List of failed responses containing error details for each login that encountered an error
     FailedResponse[] failedResponses;
 };
+
+# Email address associated with the authenticated user.
+public type EmailAddress record {
+    # Email address
+    string email;
+    # Whether the email is primary
+    boolean primary;
+    # Whether the email is verified
+    boolean verified;
+    # Visibility of the email address (public/private)
+    string? visibility;
+};
+
+# GitHub account plan details.
+public type GitHubUserPlan record {
+    # Number of collaborators allowed under the plan
+    int collaborators;
+    # Plan name (e.g., "free", "pro", "team")
+    string name;
+    # Disk space quota in kilobytes
+    int space;
+    # Number of private repositories allowed under the plan
+    int private_repos;
+
+};
+
+# Authenticated GitHub user.
+public type GitHubUser record {
+    # GitHub username
+    string login;
+    # Unique numeric user ID
+    int id;
+    # Global node ID used in GraphQL API
+    string node_id;
+    # URL of the user's avatar image
+    string avatar_url;
+    # Gravatar ID, null if not set
+    string? gravatar_id;
+    # API URL for this user resource
+    string url;
+    # URL of the user's GitHub profile page
+    string html_url;
+    # API URL to list the user's followers
+    string followers_url;
+    # API URL template for users this user is following
+    string following_url;
+    # API URL template for the user's gists
+    string gists_url;
+    # API URL template for the user's starred repositories
+    string starred_url;
+    # API URL to list the user's subscriptions (watched repositories)
+    string subscriptions_url;
+    # API URL to list the user's organization memberships
+    string organizations_url;
+    # API URL to list the user's repositories
+    string repos_url;
+    # API URL template for events performed by the user
+    string events_url;
+    # API URL to list events received by the user
+    string received_events_url;
+    # Account type (e.g., "User", "Organization")
+    string 'type;
+    # Whether the user is a GitHub site administrator
+    boolean site_admin;
+    # Display name, null if not set
+    string? name;
+    # Company name, null if not set
+    string? company;
+    # Blog or website URL, null if not set
+    string? blog;
+    # Geographic location, null if not set
+    string? location;
+    # Publicly visible email address, null if not set
+    string? email;
+    # Whether the user is open to being hired, null if not set
+    boolean? hireable;
+    # Profile biography, null if not set
+    string? bio;
+    # Number of public repositories
+    int public_repos;
+    # Number of public gists
+    int public_gists;
+    # Number of followers
+    int followers;
+    # Number of users this user is following
+    int following;
+    # Account creation timestamp (ISO 8601)
+    string created_at;
+    # Last profile update timestamp (ISO 8601)
+    string updated_at;
+    # How the user is being viewed (e.g., "public", "private")
+    string? user_view_type?;
+    # Notification email address, null if not set
+    string? notification_email?;
+    # Twitter/X username, null if not set
+    string? twitter_username?;
+    # Subscription plan details
+    GitHubUserPlan? plan?;
+    # Number of private gists (private user only)
+    int? private_gists?;
+    # Total number of private repositories (private user only)
+    int? total_private_repos?;
+    # Number of private repositories owned by the user (private user only)
+    int? owned_private_repos?;
+    # Disk usage in kilobytes (private user only)
+    int? disk_usage?;
+    # Number of collaborators on private repositories (private user only)
+    int? collaborators?;
+    # Whether two-factor authentication is enabled (private user only)
+    boolean? two_factor_authentication?;
+    # Whether the user has a GitHub Business+ plan (private user only)
+    boolean? business_plus?;
+    # LDAP distinguished name for enterprise-managed users (private user only)
+    string? ldap_dn?;
+};
+
+# Record to represent the payload for verifying an email.
+public type VerifyEmailPayload record {
+    # Authentication code sent by GitHub.
+    string code;
+    # Email address of the user to be verified.
+    string email;
+};
+
+# Record to represent the response of email verification.
+public type EmailVerificationResponse record {|
+    # Status of the email verification.
+    string status;
+    # GitHub user ID null if verification failed.
+    string? githubUserId = ();
+    # GitHub username null if verification failed.
+    string? githubUsername = ();
+|};
