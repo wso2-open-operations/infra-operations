@@ -22,7 +22,7 @@ import commentsReducer from "@slices/commentSlice/comment";
 import commonReducer from "@slices/commonSlice/common";
 import defaultTeamsReducer from "@slices/defaultTeamSlice/defaultTeams";
 import employeeReducer from "@slices/employeeSlice/employee";
-import githubConnectReducer from "@slices/githuOauthAppSlice/githubOauth";
+import githubConnectReducer from "@slices/githubOauthAppSlice/githubOauth";
 import leadsReducer from "@slices/leadsSlice/leads";
 import organizationsReducer from "@slices/organizationsSlice/organizations";
 import repositoryRequestReducer from "@slices/repositoryRequestSlice/repositoryRequest";
