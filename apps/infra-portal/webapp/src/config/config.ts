@@ -15,6 +15,8 @@
 // under the License.
 import { BaseURLAuthClientConfig } from "@asgardeo/auth-react";
 
+import { GITHUB_OAUTH_SCOPES } from "./constant";
+
 declare global {
   interface Window {
     config: {
@@ -26,6 +28,9 @@ declare global {
       AUTH_SIGN_IN_REDIRECT_URL: string;
       AUTH_SIGN_OUT_REDIRECT_URL: string;
       REACT_APP_BACKEND_BASE_URL: string;
+      GITHUB_OAUTH_CLIENT_ID: string;
+      GITHUB_OAUTH_REDIRECT_URL: string;
+      GITHUB_OAUTH_AUTHORIZE_URL: string;
     };
   }
 }
@@ -36,6 +41,13 @@ export const AsgardeoConfig: BaseURLAuthClientConfig = {
   clientID: window.config?.ASGARDEO_CLIENT_ID ?? "",
   signInRedirectURL: window.config?.AUTH_SIGN_IN_REDIRECT_URL ?? "",
   signOutRedirectURL: window.config?.AUTH_SIGN_OUT_REDIRECT_URL ?? "",
+};
+
+export const GithubOAuthConfig: BaseURLAuthClientConfig = {
+  scope: GITHUB_OAUTH_SCOPES ?? [""],
+  baseUrl: window.config?.GITHUB_OAUTH_AUTHORIZE_URL ?? "",
+  clientID: window.config?.GITHUB_OAUTH_CLIENT_ID ?? "",
+  signInRedirectURL: window.config?.GITHUB_OAUTH_REDIRECT_URL ?? "",
 };
 
 export const APP_NAME = window.config?.APP_NAME ?? "";
@@ -53,6 +65,8 @@ export const AppConfig = {
     organizations: ServiceBaseUrl + "/organizations",
     comments: (requestId: number) => `${ServiceBaseUrl}/repository-requests/${requestId}/comments`,
     defaultTeams: ServiceBaseUrl + "/default-teams",
+
+    githubVerifyEmail: ServiceBaseUrl + "/github/verify-email",
 
     securityDashboardLinks: ServiceBaseUrl + "/security-dashboard-links",
   },
