@@ -35,6 +35,13 @@ declare global {
   }
 }
 
+interface GitHubOAuthConfig {
+  clientID: string;
+  oauthAuthorizationBaseUrl: string;
+  githubAuthRedirectUrl: string;
+  scope: string[];
+}
+
 export const AsgardeoConfig: BaseURLAuthClientConfig = {
   scope: ["openid", "email", "groups"],
   baseUrl: window.config?.ASGARDEO_BASE_URL ?? "",
@@ -43,11 +50,11 @@ export const AsgardeoConfig: BaseURLAuthClientConfig = {
   signOutRedirectURL: window.config?.AUTH_SIGN_OUT_REDIRECT_URL ?? "",
 };
 
-export const GithubOAuthConfig: BaseURLAuthClientConfig = {
-  scope: GITHUB_OAUTH_SCOPES ?? [""],
-  baseUrl: window.config?.GITHUB_OAUTH_AUTHORIZE_URL ?? "",
+export const GithubOAuthConfig: GitHubOAuthConfig = {
+  scope: GITHUB_OAUTH_SCOPES,
+  oauthAuthorizationBaseUrl: window.config?.GITHUB_OAUTH_AUTHORIZE_URL ?? "",
   clientID: window.config?.GITHUB_OAUTH_CLIENT_ID ?? "",
-  signInRedirectURL: window.config?.GITHUB_OAUTH_REDIRECT_URL ?? "",
+  githubAuthRedirectUrl: window.config?.GITHUB_OAUTH_REDIRECT_URL ?? "",
 };
 
 export const APP_NAME = window.config?.APP_NAME ?? "";

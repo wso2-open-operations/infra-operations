@@ -66,9 +66,9 @@ export default function GitHubConnect() {
       client_id: GithubOAuthConfig.clientID,
       scope: (GithubOAuthConfig.scope || []).join(" "),
       state,
-      redirect_uri: GithubOAuthConfig.signInRedirectURL,
+      redirect_uri: GithubOAuthConfig.githubAuthRedirectUrl,
     });
-    window.location.href = `${GithubOAuthConfig.baseUrl}?${params.toString()}`;
+    window.location.href = `${GithubOAuthConfig.oauthAuthorizationBaseUrl}?${params.toString()}`;
   };
 
   // Runs once on mount — reads directly from window.location to avoid React Router reactivity issues.
