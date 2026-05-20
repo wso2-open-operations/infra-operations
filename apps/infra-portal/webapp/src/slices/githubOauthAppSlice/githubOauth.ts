@@ -63,7 +63,7 @@ export const connectGitHub = createAsyncThunk(
           enqueueSnackbarMessage({
             message:
               error.response?.status === HttpStatusCode.InternalServerError
-                ? SnackMessage.error.fetchLeadsMessage
+                ? SnackMessage.error.githubConnectMessage
                 : String((error.response?.data as { message?: string }).message || "Unknown error"),
             type: "error",
           }),
