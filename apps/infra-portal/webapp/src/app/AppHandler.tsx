@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import ErrorHandler from "@component/common/ErrorHandler";
 import PreLoader from "@component/common/PreLoader";
+import GitHubConnect from "@component/ui/GitHubConnect";
 import Layout from "@layout/Layout";
 import NotFoundPage from "@layout/pages/404";
 import MaintenancePage from "@layout/pages/Maintenance";
@@ -40,7 +41,10 @@ const AppHandler = () => {
           path: "/",
           element: <Layout />,
           errorElement: <NotFoundPage />,
-          children: getActiveRoutesV2(routes, auth.roles),
+          children: [
+            ...getActiveRoutesV2(routes, auth.roles),
+            { path: "github/callback", element: <GitHubConnect /> },
+          ],
         },
       ]),
     [auth.roles],

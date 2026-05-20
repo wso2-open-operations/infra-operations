@@ -104,3 +104,9 @@ export const SnackMessage = {
 export const APP_DESC = " Internal App Product Template.";
 
 export const redirectUrl = "iapm-marketplace-redirect-url";
+
+export const GITHUB_OAUTH_SCOPES: string[] = ["read:user", "user:email"];
+
+export const RESULT_KEY = "gh_connect_result";
+export const GITHUB_OAUTH_STATE_KEY = "gh_oauth_state";
+export const STATE_EXPIRY_MS = 5 * 60 * 1000;

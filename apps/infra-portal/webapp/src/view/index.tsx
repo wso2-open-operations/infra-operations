@@ -22,7 +22,9 @@ const securityDashboard = lazy(() => import("@view/security-dashboard/SecurityDa
 const home = lazy(() => import("@view/home/Home"));
 const admin = lazy(() => import("@view/admin/Admin"));
 const githubSettings = lazy(() => import("@view/admin/github-settings/GithubSettings"));
-
+const repositoryAccessRequests = lazy(
+  () => import("@view/github/pages/repository-access/RepositoryAccessRequests"),
+);
 export const View = {
   help,
   nestedPage,
@@ -31,4 +33,5 @@ export const View = {
   home,
   admin,
   githubSettings,
+  repositoryAccessRequests,
 };

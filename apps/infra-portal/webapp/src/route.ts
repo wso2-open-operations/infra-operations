@@ -77,7 +77,7 @@ export const routes: RouteObjectWithRole[] = [
         path: "repository-access-requests",
         text: "Repository Access Requests",
         icon: React.createElement(BookKey),
-        element: React.createElement(View.nestedPage),
+        element: React.createElement(View.repositoryAccessRequests),
         allowRoles: [Role.EMPLOYEE],
       },
       {
