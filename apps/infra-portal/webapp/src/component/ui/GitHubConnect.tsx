@@ -17,11 +17,11 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 
 import { useEffect, useState } from "react";
 
-import { GithubOAuthConfig } from "@root/src/config/config";
-import { GITHUB_OAUTH_STATE_KEY, RESULT_KEY, STATE_EXPIRY_MS } from "@root/src/config/constant";
-import { connectGitHub } from "@root/src/slices/githuOauthAppSlice/githubOauth";
-import { useAppDispatch, useAppSelector } from "@root/src/slices/store";
+import { GithubOAuthConfig } from "@config/config";
+import { GITHUB_OAUTH_STATE_KEY, RESULT_KEY, STATE_EXPIRY_MS } from "@config/constant";
 import { State } from "@root/src/types/types";
+import { connectGitHub } from "@slices/githubOauthAppSlice/githubOauth";
+import { useAppDispatch, useAppSelector } from "@slices/store";
 
 interface ConnectResult {
   status: "verified" | "unverified" | "error";
@@ -46,9 +46,13 @@ export default function GitHubConnect() {
 
   const [storedResult, setStoredResult] = useState<ConnectResult | null>(() => {
     const raw = sessionStorage.getItem(RESULT_KEY);
-    if (raw) {
+    try {
+      if (raw) {
+        sessionStorage.removeItem(RESULT_KEY);
+        return JSON.parse(raw) as ConnectResult;
+      }
+    } catch {
       sessionStorage.removeItem(RESULT_KEY);
-      return JSON.parse(raw) as ConnectResult;
     }
     return null;
   });
@@ -68,7 +72,6 @@ export default function GitHubConnect() {
   };
 
   // Runs once on mount — reads directly from window.location to avoid React Router reactivity issues.
-  // dispatch is stable and does not need to be in deps.
   useEffect(() => {
     const handleCallback = async () => {
       const params = new URLSearchParams(window.location.search);

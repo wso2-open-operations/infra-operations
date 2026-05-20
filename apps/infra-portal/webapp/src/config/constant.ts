@@ -97,6 +97,8 @@ export const SnackMessage = {
 
     fetchUserGuideMessage: "Unable to retrieve User Guide documents",
     fetchSecurityDashboardLinksMessage: "Unable to retrieve Security Dashboard links",
+
+    githubConnectMessage: "Connection failed. Please try again.",
   },
   warning: {},
 };
