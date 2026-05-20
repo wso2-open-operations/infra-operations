@@ -1764,7 +1764,8 @@ service http:InterceptableService / on new http:Listener(8090) {
     #
     # + gitHubUserName - GitHub username of the employee
     # + return - List of successful responses and failed responses or error
-    isolated resource function put [string gitHubUserName]/set\-default\-repository\-access(http:RequestContext ctx) returns gh:AddOrUpdateTeamMemberResponse|http:Forbidden|http:InternalServerError {
+    isolated resource function put [string gitHubUserName]/set\-default\-repository\-access(http:RequestContext ctx)
+        returns gh:AddOrUpdateTeamMemberResponse|http:Forbidden|http:InternalServerError {
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
             return <http:InternalServerError>{
@@ -1803,7 +1804,8 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
 
-        gh:AddOrUpdateTeamMemberResponse|error result = error("No team membership changes made as the employment type does not match any criteria.");
+        gh:AddOrUpdateTeamMemberResponse|error result
+            = error("No team membership changes made as the employment type does not match any criteria.");
 
         if employee.employmentType is PERMANENT {
 
@@ -1857,6 +1859,47 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
 
+        return result;
+    }
+
+    # Exchange the authorization code for an access token.
+    #
+    # + payload - The authorization code received from GitHub after user authorization
+    # + return - Access token or error
+    isolated resource function post github/verify\-email(http:RequestContext ctx, VerifyEmailPayload payload)
+        returns gh:EmailVerificationResponse|http:Forbidden|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
+                }
+            };
+        }
+
+        gh:EmailVerificationResponse|error result = gh:verifyCompanyEmail({
+            code: payload.code,
+            email: userInfo.email
+        });
+
+        if result is error {
+            string customError = "Error while verifying company email!";
+            log:printError(customError, result);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
         return result;
     }
 

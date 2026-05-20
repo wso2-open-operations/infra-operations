@@ -15,11 +15,21 @@
 // under the License.
 import infra_portal.database;
 
+# Represents the response structure for security dashboard links.
 public type SecurityDashboardLinks record {|
+    # Link to device compliance dashboard
     string deviceComplianceLink;
+    # Link to software compliance dashboard
     string softwareComplianceLink;
+    # Link to security score dashboard
     string securityScoreLink;
 |};
+
+# Represents the payload for verifying an email.
+type VerifyEmailPayload record {
+    # Authentication code sent by GitHub.
+    string code;
+};
 
 # Represents the response structure for retrieving user information.
 public type UserInfoResponse record {|
