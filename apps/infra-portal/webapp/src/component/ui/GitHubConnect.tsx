@@ -18,7 +18,12 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import { GithubOAuthConfig } from "@config/config";
-import { GITHUB_OAUTH_STATE_KEY, RESULT_KEY, STATE_EXPIRY_MS } from "@config/constant";
+import {
+  GITHUB_OAUTH_STATE_KEY,
+  RESULT_KEY,
+  STATE_EXPIRY_MS,
+  SnackMessage,
+} from "@config/constant";
 import { State } from "@root/src/types/types";
 import { connectGitHub } from "@slices/githubOauthAppSlice/githubOauth";
 import { useAppDispatch, useAppSelector } from "@slices/store";
@@ -125,12 +130,12 @@ export default function GitHubConnect() {
       } else if (connectGitHub.fulfilled.match(result)) {
         navigateWithResult({
           status: "unverified",
-          errorMessage: "No verified @wso2.com email found on your GitHub account.",
+          errorMessage: SnackMessage.error.githubUnverifiedMessage,
         });
       } else {
         navigateWithResult({
           status: "error",
-          errorMessage: "Connection failed. Please try again.",
+          errorMessage: SnackMessage.error.githubConnectMessage,
         });
       }
     };
