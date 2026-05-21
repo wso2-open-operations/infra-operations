@@ -83,7 +83,7 @@ public isolated function getUserSubscribableGroups() returns string[]|error {
 # + return - An array of group email addresses or an error if the API call fails
 public isolated function getUserSubscribedPrivateGroups(string userEmail) returns string[]|error {
     Group[] subscribedGroups = check getGroupsForUser(userEmail);
-    Group[] privateGroups = check getGroupsForUser(publicGroupUser);
+    Group[] privateGroups = check getGroupsForUser(privateGroupUser);
     string[] privateGroupEmails = [];
     foreach Group group in subscribedGroups {
         foreach Group privateGroup in privateGroups {
