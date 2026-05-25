@@ -37,12 +37,16 @@ const initialState: UnsubscribeState = {
 
 export const unsubscribeGroup = createAsyncThunk(
   "unsubscribe/unsubscribeGroup",
-  async (groupName: string, { rejectWithValue, dispatch }) => {
+  async (
+    { user, groupName }: { user: string; groupName: string },
+    { rejectWithValue, dispatch },
+  ) => {
     try {
       const payload = {
+        user,
         groupName: groupName.split("@")[0],
       };
-      await APIService.getInstance().patch(
+      await APIService.getInstance().post(
         AppConfig.serviceUrls.unsubscribe,
         payload,
       );

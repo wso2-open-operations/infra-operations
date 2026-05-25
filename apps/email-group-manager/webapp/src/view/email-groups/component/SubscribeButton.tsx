@@ -47,11 +47,15 @@ function SubscribeButton({ groupEmail, isSubscribed }: SubscribeButtonProps) {
       try {
         setLoading(true);
         if (subscribed) {
-          await dispatch(unsubscribeGroup(groupEmail)).unwrap(); // Without using unwrap(),
+          await dispatch(
+            unsubscribeGroup({ user: userEmail, groupName: groupEmail }),
+          ).unwrap(); // Without using unwrap(),
           // rejected actions won't throw an error, so we won't be able to catch them in the catch block.
           dispatch(removeExistingGroup(groupEmail));
         } else {
-          await dispatch(subscribeGroup(groupEmail)).unwrap();
+          await dispatch(
+            subscribeGroup({ user: userEmail, groupName: groupEmail }),
+          ).unwrap();
           dispatch(addNewGroup(groupEmail));
         }
         setSubscribed(!subscribed);

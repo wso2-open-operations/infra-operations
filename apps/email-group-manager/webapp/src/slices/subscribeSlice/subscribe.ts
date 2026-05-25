@@ -37,12 +37,16 @@ const initialState: SubscribeState = {
 
 export const subscribeGroup = createAsyncThunk(
   "subscribe/subscribeGroup",
-  async (groupName: string, { rejectWithValue, dispatch }) => {
+  async (
+    { user, groupName }: { user: string; groupName: string },
+    { rejectWithValue, dispatch },
+  ) => {
     try {
       const payload = {
+        user,
         groupName: groupName.split("@")[0],
       };
-      await APIService.getInstance().patch(
+      await APIService.getInstance().post(
         AppConfig.serviceUrls.subscribe,
         payload,
       );

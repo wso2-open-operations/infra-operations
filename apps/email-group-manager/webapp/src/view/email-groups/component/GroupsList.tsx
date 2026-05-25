@@ -94,7 +94,9 @@ function GroupsList({
       setBulkSubscribeLoading(true);
       for (const group of selectedUnsubscribedGroups) {
         try {
-          await dispatch(subscribeGroup(group)).unwrap();
+          await dispatch(
+            subscribeGroup({ user: userEmail, groupName: group }),
+          ).unwrap();
           dispatch(addNewGroup(group));
         } catch (error) {
           console.error(`Failed to subscribe to ${group}:`, error);
@@ -114,7 +116,9 @@ function GroupsList({
       setBulkUnsubscribeLoading(true);
       for (const group of selectedSubscribedGroups) {
         try {
-          await dispatch(unsubscribeGroup(group)).unwrap();
+          await dispatch(
+            unsubscribeGroup({ user: userEmail, groupName: group }),
+          ).unwrap();
           dispatch(removeExistingGroup(group));
         } catch (error) {
           console.error(`Failed to unsubscribe from ${group}:`, error);
