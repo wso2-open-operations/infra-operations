@@ -20,13 +20,15 @@ import {
   CircularProgress,
   Container,
   Checkbox,
+  Paper,
+  Stack,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { useTheme, alpha } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import SearchBar from "../component/SearchBar";
 import SubscribeButton from "../component/SubscribeButton";
 import ErrorHandler from "@component/common/ErrorHandler";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { State } from "@root/src/types/types";
 import NotFound from "./NotFound";
 import { useAppDispatch, useAppSelector } from "@root/src/slices/store";
@@ -65,6 +67,21 @@ function GroupsList({
   const filteredGroups = groups.filter((group) =>
     group.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const columns = useMemo(() => {
+    const leftColumn: string[] = [];
+    const rightColumn: string[] = [];
+
+    filteredGroups.forEach((group, index) => {
+      if (index % 2 === 0) {
+        leftColumn.push(group);
+      } else {
+        rightColumn.push(group);
+      }
+    });
+
+    return [leftColumn, rightColumn];
+  }, [filteredGroups]);
 
   const selectedSubscribedGroups = selectedGroups.filter((group) =>
     userGroups.includes(group),
@@ -139,136 +156,183 @@ function GroupsList({
   if (state === State.failed) return <ErrorHandler message={errorMessage} />;
 
   return (
-    <Container>
-      {/* Search */}
-      <Box sx={{ mb: 3 }}>
-        <SearchBar
-          placeholder={`Search ${title}...`}
-          onQueryChange={setSearchTerm}
-        />
-      </Box>
-
-      {showSubscribe && (
-        <Box
-          sx={{
-            mb: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            flexWrap: "wrap",
-            gap: 1.5,
-          }}
-        >
-          <LoadingButton
-            variant="outlined"
-            onClick={clearSelection}
-            disabled={selectedGroups.length === 0}
-          >
-            Clear All Selections ({selectedGroups.length})
-          </LoadingButton>
-
-          <LoadingButton
-            variant="contained"
-            color="primary"
-            onClick={handleBulkSubscribe}
-            loading={bulkSubscribeLoading}
-            disabled={selectedUnsubscribedGroups.length === 0}
-          >
-            Subscribe ({selectedUnsubscribedGroups.length})
-          </LoadingButton>
-
-          <LoadingButton
-            variant="contained"
-            color="error"
-            onClick={handleBulkUnsubscribe}
-            loading={bulkUnsubscribeLoading}
-            disabled={selectedSubscribedGroups.length === 0}
-          >
-            Unsubscribe ({selectedSubscribedGroups.length})
-          </LoadingButton>
-        </Box>
-      )}
-
-      {/* GRID */}
-      <Box
+    <Container maxWidth={false} sx={{ px: { xs: 0, sm: 2 }, pb: 2 }}>
+      <Paper
+        elevation={0}
         sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "1fr 1fr",
-            md: "1fr 1fr 1fr",
-          },
-          gap: 2,
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 2,
+          overflow: "hidden",
+          backgroundColor: theme.palette.background.paper,
         }}
       >
-        {filteredGroups.length === 0 && (
-          <Box
-            sx={{
-              gridColumn: "1 / -1",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "50vh",
-            }}
+        <Box
+          sx={{
+            p: { xs: 2, md: 2.5 },
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            backgroundColor: theme.palette.background.paper,
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", lg: "row" }}
+            spacing={2}
+            alignItems={{ xs: "stretch", lg: "center" }}
+            justifyContent="space-between"
           >
-            <NotFound message={`No ${title} found`} />
-          </Box>
-        )}
-        {filteredGroups.map((group) => (
-          <Box
-            key={group}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-
-              border: `1px solid ${theme.palette.divider}`,
-              p: 1,
-              px: 2,
-              minHeight: 40,
-
-              backgroundColor: alpha(theme.palette.background.paper, 0.6),
-
-              transition: "0.2s",
-
-              "&:hover": {
-                boxShadow:
-                  theme.palette.mode === "light"
-                    ? "0 2px 8px rgba(0,0,0,0.1)"
-                    : "0 2px 8px rgba(0,0,0,0.6)",
-              },
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {showSubscribe && (
-                <Checkbox
-                  checked={selectedGroups.includes(group)}
-                  onChange={() => toggleGroupSelection(group)}
-                />
-              )}
-
-              {/* TEXT */}
-              <Typography
-                sx={{
-                  fontSize: "14px",
-                  wordBreak: "break-all",
-                  color: theme.palette.text.primary,
-                }}
-              >
-                {group}
-              </Typography>
+            <Box sx={{ flex: 1, maxWidth: { xs: "100%", lg: 520 } }}>
+              <SearchBar
+                placeholder={`Search ${title}...`}
+                onQueryChange={setSearchTerm}
+              />
             </Box>
 
-            {/* BUTTON */}
             {showSubscribe && (
-              <SubscribeButton
-                groupEmail={group}
-                isSubscribed={userGroups.includes(group)}
-              />
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1}
+                sx={{ width: { xs: "100%", lg: "auto" } }}
+                justifyContent="flex-end"
+              >
+                <LoadingButton
+                  variant="outlined"
+                  size="small"
+                  onClick={clearSelection}
+                  disabled={selectedGroups.length === 0}
+                  disableElevation
+                  sx={{ minWidth: 152, borderRadius: 999 }}
+                >
+                  Clear selections ({selectedGroups.length})
+                </LoadingButton>
+
+                <LoadingButton
+                  variant="contained"
+                  size="small"
+                  onClick={handleBulkSubscribe}
+                  loading={bulkSubscribeLoading}
+                  disabled={selectedUnsubscribedGroups.length === 0}
+                  disableElevation
+                  sx={{ minWidth: 132, borderRadius: 999 }}
+                >
+                  Subscribe ({selectedUnsubscribedGroups.length})
+                </LoadingButton>
+
+                <LoadingButton
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={handleBulkUnsubscribe}
+                  loading={bulkUnsubscribeLoading}
+                  disabled={selectedSubscribedGroups.length === 0}
+                  disableElevation
+                  sx={{ minWidth: 140, borderRadius: 999 }}
+                >
+                  Unsubscribe ({selectedSubscribedGroups.length})
+                </LoadingButton>
+              </Stack>
             )}
-          </Box>
-        ))}
-      </Box>
+          </Stack>
+        </Box>
+
+        <Box sx={{ p: { xs: 0, md: 0 } }}>
+          {filteredGroups.length === 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: "50vh",
+              }}
+            >
+              <NotFound message={`No ${title} found`} />
+            </Box>
+          )}
+
+          {filteredGroups.length > 0 && (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "1fr 1fr",
+                },
+              }}
+            >
+              {columns.map((column, columnIndex) => (
+                <Box
+                  key={columnIndex}
+                  sx={{
+                    borderRight:
+                      columnIndex === 0
+                        ? {
+                            xs: "none",
+                            md: `1px solid ${theme.palette.divider}`,
+                          }
+                        : "none",
+                  }}
+                >
+                  {column.map((group, rowIndex) => {
+                    const subscribed = userGroups.includes(group);
+
+                    return (
+                      <Box
+                        key={group}
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: showSubscribe
+                            ? "auto minmax(0, 1fr) auto"
+                            : "minmax(0, 1fr) auto",
+                          alignItems: "center",
+                          gap: 1,
+                          px: 2,
+                          py: 0.6,
+                          minHeight: 40,
+                          borderBottom:
+                            rowIndex === column.length - 1
+                              ? "none"
+                              : `1px solid ${theme.palette.divider}`,
+                          transition: "background-color 0.15s ease",
+                          "&:hover": {
+                            backgroundColor: theme.palette.action.hover,
+                          },
+                        }}
+                      >
+                        {showSubscribe && (
+                          <Checkbox
+                            checked={selectedGroups.includes(group)}
+                            onChange={() => toggleGroupSelection(group)}
+                            size="small"
+                            sx={{ p: 0.15 }}
+                          />
+                        )}
+
+                        <Typography
+                          sx={{
+                            fontSize: 14,
+                            fontWeight: 500,
+                            color: theme.palette.text.primary,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {group}
+                        </Typography>
+
+                        {showSubscribe && (
+                          <SubscribeButton
+                            groupEmail={group}
+                            isSubscribed={subscribed}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Paper>
     </Container>
   );
 }

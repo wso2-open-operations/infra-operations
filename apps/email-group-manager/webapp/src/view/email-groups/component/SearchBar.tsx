@@ -21,20 +21,20 @@ import Box from "@mui/material/Box";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
-  borderRadius: 8,
-  backgroundColor: alpha(theme.palette.background.paper, 0.7),
+  borderRadius: 999,
+  backgroundColor: alpha(theme.palette.background.paper, 0.96),
   border: `1px solid ${theme.palette.divider}`,
   transition: "0.2s",
+  boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
   "&:hover": {
     backgroundColor: alpha(theme.palette.background.paper, 1),
-    borderColor: theme.palette.text.secondary,
+    borderColor: theme.palette.action.active,
   },
   "&:focus-within": {
     borderColor: theme.palette.primary.main,
-    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
   },
   width: "100%",
-  maxWidth: 320,
 }));
 
 const SearchIconWrapper = styled("div")(({ theme }) => ({
@@ -52,9 +52,10 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: theme.palette.text.primary,
   width: "100%",
   "& .MuiInputBase-input": {
-    padding: theme.spacing(1),
-    paddingLeft: `calc(1em + ${theme.spacing(3.5)})`,
+    padding: theme.spacing(1.15, 1.5, 1.15, 0),
+    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     fontSize: "14px",
+    lineHeight: 1.4,
     "&::placeholder": {
       color: theme.palette.text.secondary,
       opacity: 0.8,
@@ -70,20 +71,18 @@ export default function SearchBar({
   onQueryChange: (query: string) => void;
 }) {
   return (
-    <Box sx={{ display: "flex" }}>
-      <Box sx={{ marginLeft: "auto" }}>
-        <Search>
-          <SearchIconWrapper>
-            <SearchIcon fontSize="small" />
-          </SearchIconWrapper>
+    <Box sx={{ width: "100%" }}>
+      <Search>
+        <SearchIconWrapper>
+          <SearchIcon fontSize="small" />
+        </SearchIconWrapper>
 
-          <StyledInputBase
-            placeholder={placeholder}
-            inputProps={{ "aria-label": "search" }}
-            onChange={(e) => onQueryChange(e.target.value)}
-          />
-        </Search>
-      </Box>
+        <StyledInputBase
+          placeholder={placeholder}
+          inputProps={{ "aria-label": "search" }}
+          onChange={(e) => onQueryChange(e.target.value)}
+        />
+      </Search>
     </Box>
   );
 }

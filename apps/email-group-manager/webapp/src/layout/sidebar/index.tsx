@@ -186,13 +186,12 @@ const Sidebar = (props: SidebarProps) => {
               {allRoutes
                 .filter((route) => route.bottomNav)
                 .map((route, idx) => (
-                  <Box key={idx}>
-                    <SidebarNavItem
-                      route={route}
-                      open={props.open}
-                      isActive={path.pathname === route.path}
-                    />
-                  </Box>
+                  <SidebarNavItem
+                    route={route}
+                    open={props.open}
+                    isActive={path.pathname === route.path}
+                    key={idx}
+                  />
                 ))}
 
               {/* Spacer */}

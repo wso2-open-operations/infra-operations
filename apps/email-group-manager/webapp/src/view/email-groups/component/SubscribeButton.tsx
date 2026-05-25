@@ -70,10 +70,12 @@ function SubscribeButton({ groupEmail, isSubscribed }: SubscribeButtonProps) {
 
   return (
     <LoadingButton
-      variant={subscribed ? "contained" : "outlined"}
+      variant="outlined"
       color={subscribed ? "error" : "primary"}
+      size="small"
       onClick={handleButtonClick}
       loading={loading}
+      sx={{ minWidth: 86, whiteSpace: "nowrap", py: 0.35 }}
     >
       {subscribed ? "Unsubscribe" : "Subscribe"}
     </LoadingButton>
