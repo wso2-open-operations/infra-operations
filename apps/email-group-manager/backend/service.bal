@@ -33,7 +33,6 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + return - User information or InternalServerError
     resource function get user\-info(http:RequestContext ctx) returns UserInfo|http:InternalServerError {
-        // User information header.
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
             log:printError(USER_INFO_HEADER_NOT_FOUND_ERROR, userInfo);
@@ -44,7 +43,6 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        // Check if the employees are already cached.
         if cache.hasKey(userInfo.email) {
             UserInfo|error cachedUserInfo = cache.get(userInfo.email).ensureType();
             if cachedUserInfo is UserInfo {
@@ -69,7 +67,6 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        // Fetch the user's privileges based on the roles.
         int[] privileges = [];
         if authorization:checkPermissions([...authorization:authorizedRoles.EMPLOYEE_ROLE], userInfo.groups) {
             privileges.push(authorization:EMPLOYEE_PRIVILEGE);
@@ -87,90 +84,10 @@ service http:InterceptableService / on new http:Listener(9090) {
         return userInfoResponse;
     }
 
-    # Get default google groups. All employees are subscribed to these google groups by default.
+    # Fetch logged-in user's email groups.
     #
-    # + return - default google groups as a string array
-    resource function get default\-google\-groups(http:RequestContext ctx)
-        returns string[]|http:Unauthorized|http:InternalServerError {
-
-        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
-        if userInfo is error {
-            log:printError(USER_INFO_HEADER_NOT_FOUND_ERROR, userInfo);
-            return <http:InternalServerError>{
-                body: {
-                    message: USER_INFO_HEADER_NOT_FOUND_ERROR
-                }
-            };
-        }
-
-        string[]|error defaultGoogleGroups = google_sdk:getDefaultGoogleGroups();
-        if defaultGoogleGroups is error {
-            log:printError(string `Error in getting default google groups`, 'error = defaultGoogleGroups,
-                    stackTrace = defaultGoogleGroups.stackTrace(), userEmail = userInfo.email);
-            return http:INTERNAL_SERVER_ERROR;
-        }
-
-        return defaultGoogleGroups;
-    }
-
-    # Get public google groups. These are the google groups that the user can subscribe to and unsubscribe from.
-    #
-    # + return - public google groups as a string array
-    resource function get public\-google\-groups(http:RequestContext ctx)
-        returns string[]|http:Unauthorized|http:InternalServerError {
-
-        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
-        if userInfo is error {
-            log:printError(USER_INFO_HEADER_NOT_FOUND_ERROR, userInfo);
-            return <http:InternalServerError>{
-                body: {
-                    message: USER_INFO_HEADER_NOT_FOUND_ERROR
-                }
-            };
-        }
-
-        string[]|error publicGoogleGroups = google_sdk:getUserSubscribableGroups();
-        if publicGoogleGroups is error {
-            log:printError(string `Error in getting public google groups`, 'error = publicGoogleGroups,
-                    stackTrace = publicGoogleGroups.stackTrace(), userEmail = userInfo.email);
-            return http:INTERNAL_SERVER_ERROR;
-        }
-
-        return publicGoogleGroups;
-    }
-
-    # Get user subscribed private google groups. These are the private google groups that the user is subscribed to.
-    #
-    # + return - user subscribed private google groups as a string array
-    resource function get private\-google\-groups(http:RequestContext ctx)
-        returns string[]|http:Unauthorized|http:InternalServerError {
-
-        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
-        if userInfo is error {
-            log:printError(USER_INFO_HEADER_NOT_FOUND_ERROR, userInfo);
-            return <http:InternalServerError>{
-                body: {
-                    message: USER_INFO_HEADER_NOT_FOUND_ERROR
-                }
-            };
-        }
-
-        string[]|error userSubscribedPrivateGroups = google_sdk:getUserSubscribedPrivateGroups(userInfo.email);
-        if userSubscribedPrivateGroups is error {
-            log:printError(string `Error in getting private google groups`, 'error = userSubscribedPrivateGroups,
-                    stackTrace = userSubscribedPrivateGroups.stackTrace(), userEmail = userInfo.email);
-            return http:INTERNAL_SERVER_ERROR;
-        }
-
-        return userSubscribedPrivateGroups;
-    }
-
-    # Get user google groups. These are the google groups that the user is subscribed to.
-    #
-    # + return - user's google groups as a string array
-    resource function get user\-google\-groups(http:RequestContext ctx)
-        returns string[]|http:Unauthorized|http:InternalServerError {
-
+    # + return - List of email groups or InternalServerError
+    resource function get email\-groups/me(http:RequestContext ctx) returns string[]|http:InternalServerError {
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
             log:printError(USER_INFO_HEADER_NOT_FOUND_ERROR, userInfo);
@@ -183,7 +100,7 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         google_sdk:Group[]|error userGoogleGroups = google_sdk:getGroupsForUser(userInfo.email);
         if userGoogleGroups is error {
-            log:printError(string `Error in getting user's google groups`, 'error = userGoogleGroups,
+            log:printError(string `Error in getting user's email groups`, 'error = userGoogleGroups,
                     stackTrace = userGoogleGroups.stackTrace(), userEmail = userInfo.email);
             return http:INTERNAL_SERVER_ERROR;
         }
@@ -196,12 +113,11 @@ service http:InterceptableService / on new http:Listener(9090) {
         return userGoogleGroupEmails;
     }
 
-    # Get all google groups. These are the all available google groups that the user can subscribe to and unsubscribe from.
+    # Fetch email groups based on the type.
     #
-    # + return - all google groups as a string array
-    resource function get all\-google\-groups(http:RequestContext ctx)
-        returns string[]|http:Unauthorized|http:InternalServerError {
-
+    # + 'type - EmailGroupsType to specify the type of email groups to be fetched (ALL, DEFAULT, PRIVATE, PUBLIC)
+    # + return - List of email groups or InternalServerError
+    resource function get email\-groups(http:RequestContext ctx, EmailGroupsTypes 'type) returns string[]|http:InternalServerError {
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
             log:printError(USER_INFO_HEADER_NOT_FOUND_ERROR, userInfo);
@@ -212,22 +128,74 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string[]|error allGoogleGroups = google_sdk:getAllGroupsInDomain(utils:emailDomain);
-        if allGoogleGroups is error {
-            log:printError(string `Error in getting all google groups`, 'error = allGoogleGroups,
-                    stackTrace = allGoogleGroups.stackTrace(), userEmail = userInfo.email);
-            return http:INTERNAL_SERVER_ERROR;
+        match 'type {
+            ALL => {
+                string[]|error allGoogleGroups = google_sdk:getAllGroupsInDomain(utils:emailDomain);
+                if allGoogleGroups is error {
+                    log:printError(string `Error in getting all google groups`, 'error = allGoogleGroups,
+                            stackTrace = allGoogleGroups.stackTrace(), userEmail = userInfo.email);
+                    return <http:InternalServerError>{
+                        body: {
+                            message: "Error in getting all google groups"
+                        }
+                    };
+                }
+
+                return allGoogleGroups;
+            }
+            DEFAULT => {
+                string[]|error defaultGoogleGroups = google_sdk:getDefaultGoogleGroups();
+                if defaultGoogleGroups is error {
+                    log:printError(string `Error in getting default google groups`, 'error = defaultGoogleGroups,
+                            stackTrace = defaultGoogleGroups.stackTrace(), userEmail = userInfo.email);
+                    return <http:InternalServerError>{
+                        body: {
+                            message: "Error in getting default google groups"
+                        }
+                    };
+                }
+
+                return defaultGoogleGroups;
+            }
+            PUBLIC => {
+                string[]|error publicGoogleGroups = google_sdk:getUserSubscribableGroups();
+                if publicGoogleGroups is error {
+                    log:printError(string `Error in getting public google groups`, 'error = publicGoogleGroups,
+                            stackTrace = publicGoogleGroups.stackTrace(), userEmail = userInfo.email);
+                    return <http:InternalServerError>{
+                        body: {
+                            message: "Error in getting public google groups"
+                        }
+                    };
+                }
+
+                return publicGoogleGroups;
+            }
+            PRIVATE => {
+                string[]|error userSubscribedPrivateGroups = google_sdk:getUserSubscribedPrivateGroups(userInfo.email);
+                if userSubscribedPrivateGroups is error {
+                    log:printError(string `Error in getting private google groups`, 'error = userSubscribedPrivateGroups,
+                            stackTrace = userSubscribedPrivateGroups.stackTrace(), userEmail = userInfo.email);
+                    return <http:InternalServerError>{
+                        body: {
+                            message: "Error in getting private google groups"
+                        }
+                    };
+                }
+
+                return userSubscribedPrivateGroups;
+            }
         }
 
-        return allGoogleGroups;
+        return [];
     }
 
-    # Subscribe the user to a google group.
+    # Subscribe to a google group.
     #
-    # + input - types:Subscription
-    # + return - http:Ok|http:Unauthorized|http:InternalServerError|http:BadRequest
-    resource function patch google\-group/subscribe(http:RequestContext ctx,
-            @http:Payload types:Subscription input) returns http:Ok|http:Unauthorized|http:InternalServerError|http:BadRequest {
+    # + payload - Payload containing the user email and the group name to which the user wants to subscribe.
+    # + return - Success message or InternalServerError or BadRequest
+    resource function post google\-group/subscribe(http:RequestContext ctx, types:Payload payload)
+        returns http:Ok|http:InternalServerError|http:BadRequest {
 
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
@@ -239,38 +207,59 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string groupEmail = utils:createGroupEmailFromGroupName(input.groupName);
+        string userEmail = userInfo.email;
+        if authorization:checkPermissions([authorization:authorizedRoles.ADMIN_ROLE], userInfo.groups) && payload.user != userInfo.email {
+            userEmail = payload.user;
+        }
+
+        string groupEmail = utils:createGroupEmailFromGroupName(payload.groupName);
         boolean|error res = google_sdk:checkGroupIsSubscribable(groupEmail);
         if res is error {
-            log:printError(string `Error checking if the group is subscribable: ${input.groupName}`, 'error = res,
-                    stackTrace = res.stackTrace(), userEmail = userInfo.email);
-            return http:INTERNAL_SERVER_ERROR;
+            log:printError(string `Error checking if the group is subscribable: ${payload.groupName}`, 'error = res,
+                    stackTrace = res.stackTrace(), userEmail = userEmail);
+            return <http:InternalServerError>{
+                body: {
+                    message: string `Error checking if the group is subscribable: ${payload.groupName}`
+                }
+            };
         }
 
         if res == false {
-            log:printInfo(string `The group is not subscribable: ${input.groupName}`, userEmail = userInfo.email);
-            return http:BAD_REQUEST;
+            log:printInfo(string `The group is not subscribable: ${payload.groupName}`, userEmail = userEmail);
+            return <http:BadRequest>{
+                body: {
+                    message: string `The group is not subscribable: ${payload.groupName}`
+                }
+            };
         }
 
-        boolean|error response = google_sdk:subscribeUserToGroup(userInfo.email, groupEmail);
+        boolean|error response = google_sdk:subscribeUserToGroup(userEmail, groupEmail);
         if response is error {
-            log:printError(string `Error when subscribing to the google group: ${input.groupName}`, 'error = response,
-                    stackTrace = response.stackTrace(), userEmail = userInfo.email);
-            return http:INTERNAL_SERVER_ERROR;
+            log:printError(string `Error when subscribing to the google group: ${payload.groupName}`, 'error = response,
+                    stackTrace = response.stackTrace(), userEmail = userEmail);
+            return <http:InternalServerError>{
+                body: {
+                    message: string `Error when subscribing to the google group: ${payload.groupName}`
+                }
+            };
         }
 
-        log:printInfo(string `Successfully subscribed to the google group: ${input.groupName}`,
-                userEmail = userInfo.email);
+        log:printInfo(string `Successfully subscribed to the google group: ${payload.groupName}`,
+                userEmail = userEmail);
 
-        return http:OK;
+        return <http:Ok>{
+            body: {
+                message: string `Successfully subscribed to the google group: ${payload.groupName}`
+            }
+        };
     }
 
-    # Unsubscribe the user from a google group.
+    # Unsubscribe from a google group.
     #
-    # + input - types:Subscription
-    # + return - http:Ok|http:Unauthorized|http:InternalServerError
-    resource function patch google\-group/unsubscribe(http:RequestContext ctx,
-            @http:Payload types:Subscription input) returns http:Ok|http:Unauthorized|http:InternalServerError {
+    # + payload - Payload containing the user email and the group name from which the user wants to unsubscribe.
+    # + return - Success message or InternalServerError or BadRequest
+    resource function post google\-group/unsubscribe(http:RequestContext ctx, types:Payload payload)
+        returns http:Ok|http:InternalServerError {
 
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
@@ -282,17 +271,30 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string groupEmail = utils:createGroupEmailFromGroupName(input.groupName);
-        boolean|error response = google_sdk:unsubscribeUserFromGroup(userInfo.email, groupEmail);
-        if response is error {
-            log:printError(string `Error when unsubscribing from the google group: ${input.groupName}`, 'error = response,
-                    stackTrace = response.stackTrace(), userEmail = userInfo.email);
-            return http:INTERNAL_SERVER_ERROR;
+        string userEmail = userInfo.email;
+        if authorization:checkPermissions([authorization:authorizedRoles.ADMIN_ROLE], userInfo.groups) && payload.user != userInfo.email {
+            userEmail = payload.user;
         }
 
-        log:printInfo(string `Successfully unsubscribed from the google group: ${input.groupName}`,
-                userEmail = userInfo.email);
+        string groupEmail = utils:createGroupEmailFromGroupName(payload.groupName);
+        boolean|error response = google_sdk:unsubscribeUserFromGroup(userEmail, groupEmail);
+        if response is error {
+            log:printError(string `Error when unsubscribing from the google group: ${payload.groupName}`, 'error = response,
+                    stackTrace = response.stackTrace(), userEmail = userEmail);
+            return <http:InternalServerError>{
+                body: {
+                    message: string `Error when unsubscribing from the google group: ${payload.groupName}`
+                }
+            };
+        }
 
-        return http:OK;
+        log:printInfo(string `Successfully unsubscribed from the google group: ${payload.groupName}`,
+                userEmail = userEmail);
+
+        return <http:Ok>{
+            body: {
+                message: string `Successfully unsubscribed from the google group: ${payload.groupName}`
+            }
+        };
     }
 }

@@ -7,9 +7,18 @@
 
 import email_group_manager.people;
 
+# Email groups types (ALL, DEFAULT, PRIVATE, PUBLIC).
+enum EmailGroupsTypes {
+    ALL,
+    DEFAULT,
+    PRIVATE,
+    PUBLIC
+};
+
 # Response for fetching user information.
-type UserInfo record {
+type UserInfo record {|
     *people:Employee;
     # Array of privileges assigned to the user
     int[] privileges;
-};
+    json...;
+|};

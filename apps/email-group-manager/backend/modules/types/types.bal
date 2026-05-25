@@ -27,8 +27,9 @@ public type UserInfo record {|
     string email;
 |};
 
-# Subscription record that is used to store the subscribe/unsubscribe request details.
-public type Subscription record {|
-    # Google group name as a string
+public type Payload record {|
+    # Email of the user as a string
+    string user;
+    # Name of the google
     string groupName;
 |};
