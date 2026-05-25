@@ -8,11 +8,11 @@
 import ballerina/http;
 import ballerina/url;
 
-# Gets the groups a user is a member of using the Admin SDK API.
+# Gets the email groups a user is a member of using the Admin SDK API.
 #
 # + userEmail - The email of the user to get groups for
-# + return - An array of Group records or an error if the API call fails
-public isolated function getGroupsForUser(string userEmail) returns Group[]|error {
+# + return - An array of Email Group records or an error if the API call fails
+public isolated function getEmailGroupsForUser(string userEmail) returns EmailGroup[]|error {
     string encodedUserEmail = check url:encode(userEmail, "UTF-8");
     string path = string `/admin/directory/v1/groups?userKey=${encodedUserEmail}`;
     http:Client adminClient = check getAdminClient();
@@ -23,28 +23,28 @@ public isolated function getGroupsForUser(string userEmail) returns Group[]|erro
         return error(string `Admin SDK error ${res.statusCode}: ${errBody}`);
     }
 
-    GroupListResponse groupPage = check (check res.getJsonPayload()).cloneWithType();
+    EmailGroupListResponse groupPage = check (check res.getJsonPayload()).cloneWithType();
     return groupPage.groups ?: [];
 }
 
-# Gets the default groups for the default user.
+# Gets the default email groups that the default user is a member of.
 #
 # + return - An array of group email addresses or an error if the API call fails
-public isolated function getDefaultGoogleGroups() returns string[]|error {
-    Group[] defaultGroups = check getGroupsForUser(defaultUser);
-    string[] defaultGroupEmails = [];
-    foreach Group group in defaultGroups {
-        defaultGroupEmails.push(group.email);
+public isolated function getDefaultEmailGroups() returns string[]|error {
+    EmailGroup[] defaultEmailGroupsResponse = check getEmailGroupsForUser(defaultUser);
+    string[] defaultEmailGroups = [];
+    foreach EmailGroup group in defaultEmailGroupsResponse {
+        defaultEmailGroups.push(group.email);
     }
 
-    return defaultGroupEmails;
+    return defaultEmailGroups;
 }
 
-# Get the all groups in the domain.
+# Get the all email groups in the domain.
 #
 # + emailDomain - The email domain to get groups for
 # + return - An array of group email addresses or an error if the API call fails
-public isolated function getAllGroupsInDomain(string emailDomain) returns string[]|error {
+public isolated function getAllEmailGroupsInDomain(string emailDomain) returns string[]|error {
     string encodedEmailDomain = check url:encode(emailDomain, "UTF-8");
     string path = string `/admin/directory/v1/groups?domain=${encodedEmailDomain}`;
     http:Client adminClient = check getAdminClient();
@@ -55,46 +55,46 @@ public isolated function getAllGroupsInDomain(string emailDomain) returns string
         return error(string `Admin SDK error ${res.statusCode}: ${errBody}`);
     }
 
-    GroupListResponse groupPage = check (check res.getJsonPayload()).cloneWithType();
-    string[] groupEmails = [];
-    foreach Group group in groupPage.groups ?: [] {
-        groupEmails.push(group.email);
+    EmailGroupListResponse groupPage = check (check res.getJsonPayload()).cloneWithType();
+    string[] emailGroups = [];
+    foreach EmailGroup group in groupPage.groups ?: [] {
+        emailGroups.push(group.email);
     }
 
-    return groupEmails;
+    return emailGroups;
 }
 
-# Gets the groups that the user can subscribe to.
+# Gets the email groups that the user can subscribe to.
 #
-# + return - An array of group email addresses or an error if the API call fails
-public isolated function getUserSubscribableGroups() returns string[]|error {
-    Group[] subscribableGroups = check getGroupsForUser(publicGroupUser);
-    string[] subscribableGroupEmails = [];
-    foreach Group group in subscribableGroups {
-        subscribableGroupEmails.push(group.email);
+# + return - An array of email group addresses or an error if the API call fails
+public isolated function getUserSubscribableEmailGroups() returns string[]|error {
+    EmailGroup[] subscribableEmailGroupsResponse = check getEmailGroupsForUser(publicGroupUser);
+    string[] subscribableEmailGroups = [];
+    foreach EmailGroup group in subscribableEmailGroupsResponse {
+        subscribableEmailGroups.push(group.email);
     }
 
-    return subscribableGroupEmails;
+    return subscribableEmailGroups;
 }
 
-# Get given user subscribed private groups.
+# Get given user subscribed private email groups.
 #
-# + userEmail - The email of the user to get subscribed private groups for
-# + return - An array of group email addresses or an error if the API call fails
-public isolated function getUserSubscribedPrivateGroups(string userEmail) returns string[]|error {
-    Group[] subscribedGroups = check getGroupsForUser(userEmail);
-    Group[] privateGroups = check getGroupsForUser(privateGroupUser);
-    string[] privateGroupEmails = [];
-    foreach Group group in subscribedGroups {
-        foreach Group privateGroup in privateGroups {
+# + userEmail - The email of the user to get subscribed private email groups for
+# + return - An array of email group addresses or an error if the API call fails
+public isolated function getUserSubscribedPrivateEmailGroups(string userEmail) returns string[]|error {
+    EmailGroup[] subscribedEmailGroupsResponse = check getEmailGroupsForUser(userEmail);
+    EmailGroup[] privateEmailGroupsResponse = check getEmailGroupsForUser(privateGroupUser);
+    string[] privateEmailGroups = [];
+    foreach EmailGroup group in subscribedEmailGroupsResponse {
+        foreach EmailGroup privateGroup in privateEmailGroupsResponse {
             if group.email == privateGroup.email {
-                privateGroupEmails.push(group.email);
+                privateEmailGroups.push(group.email);
                 break;
             }
         }
     }
 
-    return privateGroupEmails;
+    return privateEmailGroups;
 }
 
 # Subscribes a user to a group using the Admin SDK API.

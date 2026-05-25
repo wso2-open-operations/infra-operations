@@ -26,7 +26,7 @@ type OAuthClientConfig record {|
 |};
 
 # Group record type representing a Google Group as returned by the Admin SDK API.
-public type Group record {|
+public type EmailGroup record {|
     # The unique identifier of the group
     string id;
     # The email address of the group
@@ -41,9 +41,9 @@ public type Group record {|
 |};
 
 # GroupListResponse record type representing the response from the Admin SDK API when listing groups.
-type GroupListResponse record {|
+type EmailGroupListResponse record {|
     # An array of Group records representing the groups returned by the API
-    Group[] groups?;
+    EmailGroup[] groups?;
     # A token to retrieve the next page of results, if pagination is used
     string? nextPageToken?;
     json...;
