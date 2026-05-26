@@ -1850,7 +1850,7 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         if result is error {
-            string customError = "Error while adding/updating team membership for the permanent employee!";
+            string customError = "Error while adding/updating team membership for the employee!";
             log:printError(customError, result, userName = gitHubUserName);
             return <http:InternalServerError>{
                 body: {
@@ -1887,9 +1887,9 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         gh:EmailVerificationResponse|error result = gh:verifyCompanyEmail({
-            code: payload.code,
-            email: userInfo.email
-        });
+                                                                              code: payload.code,
+                                                                              email: userInfo.email
+                                                                          });
 
         if result is error {
             string customError = "Error while verifying company email!";
