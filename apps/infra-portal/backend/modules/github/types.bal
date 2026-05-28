@@ -532,41 +532,57 @@ public type GitHubUserPlan record {
 # Authenticated GitHub user.
 public type GitHubUser record {
     # GitHub username
+    @jsondata:Name {value: "login"}
     string login;
     # Unique numeric user ID
     int id;
     # Global node ID used in GraphQL API
-    string node_id;
+    @jsondata:Name {value: "node_id"}
+    string nodeId;
     # URL of the user's avatar image
-    string avatar_url;
+    @jsondata:Name {value: "avatar_url"}
+    string avatarUrl;
     # Gravatar ID, null if not set
-    string? gravatar_id;
+    @jsondata:Name {value: "gravatar_id"}
+    string? gravatarId;
     # API URL for this user resource
     string url;
     # URL of the user's GitHub profile page
-    string html_url;
+    @jsondata:Name {value: "html_url"}
+    string htmlUrl;
     # API URL to list the user's followers
-    string followers_url;
+    @jsondata:Name {value: "followers_url"}
+    string followersUrl;
     # API URL template for users this user is following
-    string following_url;
+    @jsondata:Name {value: "following_url"}
+    string followingUrl;
     # API URL template for the user's gists
-    string gists_url;
+    @jsondata:Name {value: "gists_url"}
+    string gistsUrl;
     # API URL template for the user's starred repositories
-    string starred_url;
+    @jsondata:Name {value: "starred_url"}
+    string starredUrl;
     # API URL to list the user's subscriptions (watched repositories)
-    string subscriptions_url;
+    @jsondata:Name {value: "subscriptions_url"}
+    string subscriptionsUrl;
     # API URL to list the user's organization memberships
-    string organizations_url;
+    @jsondata:Name {value: "organizations_url"}
+    string organizationsUrl;
     # API URL to list the user's repositories
-    string repos_url;
+    @jsondata:Name {value: "repos_url"}
+    string reposUrl;
     # API URL template for events performed by the user
-    string events_url;
+    @jsondata:Name {value: "events_url"}
+    string eventsUrl;
     # API URL to list events received by the user
-    string received_events_url;
+    @jsondata:Name {value: "received_events_url"}
+    string receivedEventsUrl;
     # Account type (e.g., "User", "Organization")
-    string 'type;
+    @jsondata:Name {value: "type"}
+    string accountType;
     # Whether the user is a GitHub site administrator
-    boolean site_admin;
+    @jsondata:Name {value: "site_admin"}
+    boolean siteAdmin;
     # Display name, null if not set
     string? name;
     # Company name, null if not set
@@ -582,41 +598,55 @@ public type GitHubUser record {
     # Profile biography, null if not set
     string? bio;
     # Number of public repositories
-    int public_repos;
+    @jsondata:Name {value: "public_repos"}
+    int publicRepos;
     # Number of public gists
-    int public_gists;
+    @jsondata:Name {value: "public_gists"}
+    int publicGists;
     # Number of followers
     int followers;
     # Number of users this user is following
     int following;
     # Account creation timestamp (ISO 8601)
-    string created_at;
+    @jsondata:Name {value: "created_at"}
+    string createdAt;
     # Last profile update timestamp (ISO 8601)
-    string updated_at;
+    @jsondata:Name {value: "updated_at"}
+    string updatedAt;
     # How the user is being viewed (e.g., "public", "private")
-    string? user_view_type?;
+    @jsondata:Name {value: "user_view_type"}
+    string? userViewType?;
     # Notification email address, null if not set
-    string? notification_email?;
+    @jsondata:Name {value: "notification_email"}
+    string? notificationEmail?;
     # Twitter/X username, null if not set
-    string? twitter_username?;
+    @jsondata:Name {value: "twitter_username"}
+    string? twitterUsername?;
     # Subscription plan details
     GitHubUserPlan? plan?;
     # Number of private gists (private user only)
-    int? private_gists?;
+    @jsondata:Name {value: "private_gists"}
+    int? privateGists?;
     # Total number of private repositories (private user only)
-    int? total_private_repos?;
+    @jsondata:Name {value: "total_private_repos"}
+    int? totalPrivateRepos?;
     # Number of private repositories owned by the user (private user only)
-    int? owned_private_repos?;
+    @jsondata:Name {value: "owned_private_repos"}
+    int? ownedPrivateRepos?;
     # Disk usage in kilobytes (private user only)
-    int? disk_usage?;
+    @jsondata:Name {value: "disk_usage"}
+    int? diskUsage?;
     # Number of collaborators on private repositories (private user only)
     int? collaborators?;
     # Whether two-factor authentication is enabled (private user only)
-    boolean? two_factor_authentication?;
+    @jsondata:Name {value: "two_factor_authentication"}
+    boolean? twoFactorAuthentication?;
     # Whether the user has a GitHub Business+ plan (private user only)
-    boolean? business_plus?;
+    @jsondata:Name {value: "business_plus"}
+    boolean? businessPlus?;
     # LDAP distinguished name for enterprise-managed users (private user only)
-    string? ldap_dn?;
+    @jsondata:Name {value: "ldap_dn"}
+    string? ldapDn?;
 };
 
 # Record to represent the payload for verifying an email.

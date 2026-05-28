@@ -18,6 +18,7 @@ import infra_portal.database as db;
 import infra_portal.email;
 import infra_portal.entity;
 import infra_portal.github as gh;
+import infra_portal.scim;
 
 import ballerina/cache;
 import ballerina/http;
@@ -1762,9 +1763,8 @@ service http:InterceptableService / on new http:Listener(8090) {
 
     # Set default repository access for a GitHub user based on their employment type and department.
     #
-    # + gitHubUserName - GitHub username of the employee
     # + return - List of successful responses and failed responses or error
-    isolated resource function put [string gitHubUserName]/set\-default\-repository\-access(http:RequestContext ctx)
+    isolated resource function put set\-default\-repository\-access(http:RequestContext ctx)
         returns gh:AddOrUpdateTeamMemberResponse|http:Forbidden|http:InternalServerError {
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
@@ -1774,7 +1774,6 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-
         if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
             return <http:Forbidden>{
                 body: {
@@ -1782,7 +1781,6 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-
         entity:Employee|error? employee = entity:fetchEmployeesBasicInfo(userInfo.email);
         if employee is error {
             string customError = "Error while fetching employee information!";
@@ -1793,7 +1791,6 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-
         if employee is () {
             string customError = "Employee information not found for the employee!";
             log:printError(customError, email = userInfo.email);
@@ -1804,24 +1801,24 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
 
-        gh:AddOrUpdateTeamMemberResponse|error result
-            = error("No team membership changes made as the employment type does not match any criteria.");
-
-        if employee.employmentType is PERMANENT {
-
-            gh:AddOrUpdateTeamMemberInformationInput[] inputs
-                = from gh:OrganizationAndTeam organizationAndTeam in gh:PERMANENT_DEFAULT_TEAM_ACCESS
-                select {
-                    orgName: organizationAndTeam.orgName,
-                    teamSlug: organizationAndTeam.teamSlug,
-                    userName: gitHubUserName,
-                    role: gh:MEMBER
+        string? gitHubUserId = userInfo.githubUserId;
+        gh:AddOrUpdateTeamMemberResponse|error result = error("No team membership changes made as the employment type does not match any criteria.");
+        if gitHubUserId is string {
+            gh:GitHubUser|error gitHubUser = gh:getUserDetails(gitHubUserId);
+            if gitHubUser is error {
+                string customError = "Error while fetching GitHub user details!";
+                log:printError(customError, gitHubUser, githubUserId = gitHubUserId);
+                return <http:InternalServerError>{
+                    body: {
+                        message: customError
+                    }
                 };
+            }
 
-            if employee.department is CUSTOMER_SUCCESS_DEPARTMENT {
-
-                gh:AddOrUpdateTeamMemberInformationInput[] customerSuccessInputs
-                    = from gh:OrganizationAndTeam organizationAndTeam in gh:CS_TEAM_ACCESS
+            string gitHubUserName = gitHubUser.login;
+            if employee.employmentType is PERMANENT {
+                gh:AddOrUpdateTeamMemberInformationInput[] inputs
+                = from gh:OrganizationAndTeam organizationAndTeam in gh:PERMANENT_DEFAULT_TEAM_ACCESS
                     select {
                         orgName: organizationAndTeam.orgName,
                         teamSlug: organizationAndTeam.teamSlug,
@@ -1829,36 +1826,43 @@ service http:InterceptableService / on new http:Listener(8090) {
                         role: gh:MEMBER
                     };
 
-                inputs.push(...customerSuccessInputs);
+                if employee.department is CUSTOMER_SUCCESS_DEPARTMENT {
+                    gh:AddOrUpdateTeamMemberInformationInput[] customerSuccessInputs
+                    = from gh:OrganizationAndTeam organizationAndTeam in gh:CS_TEAM_ACCESS
+                        select {
+                            orgName: organizationAndTeam.orgName,
+                            teamSlug: organizationAndTeam.teamSlug,
+                            userName: gitHubUserName,
+                            role: gh:MEMBER
+                        };
+
+                    inputs.push(...customerSuccessInputs);
+                }
+                result = gh:addOrUpdateTeamMemberships(inputs);
             }
 
-            result = gh:addOrUpdateTeamMemberships(inputs);
-
-        }
-
-        if employee.employmentType is INTERNSHIP {
-            gh:AddOrUpdateTeamMemberInformationInput[] inputs
+            if employee.employmentType is INTERNSHIP {
+                gh:AddOrUpdateTeamMemberInformationInput[] inputs
                 = from string organization in gh:INTERNS_DEFAULT_ORGANIZATIONS
-                select {
-                    orgName: organization,
-                    teamSlug: WSO2_ALL_INTERNS_TEAM_SLUG,
-                    userName: gitHubUserName,
-                    role: gh:MEMBER
-                };
+                    select {
+                        orgName: organization,
+                        teamSlug: WSO2_ALL_INTERNS_TEAM_SLUG,
+                        userName: gitHubUserName,
+                        role: gh:MEMBER
+                    };
 
-            result = gh:addOrUpdateTeamMemberships(inputs);
+                result = gh:addOrUpdateTeamMemberships(inputs);
+            }
         }
-
         if result is error {
             string customError = "Error while adding/updating team membership for the employee!";
-            log:printError(customError, result, userName = gitHubUserName);
+            log:printError(customError, result);
             return <http:InternalServerError>{
                 body: {
                     message: customError
                 }
             };
         }
-
         return result;
     }
 
@@ -1877,7 +1881,6 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-
         if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
             return <http:Forbidden>{
                 body: {
@@ -1885,11 +1888,8 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-
-        gh:EmailVerificationResponse|error result = gh:verifyCompanyEmail({
-                                                                              code: payload.code,
-                                                                              email: userInfo.email
-                                                                          });
+        gh:EmailVerificationResponse|error result
+            = gh:verifyCompanyEmail({code: payload.code, email: userInfo.email});
 
         if result is error {
             string customError = "Error while verifying company email!";
@@ -1899,6 +1899,31 @@ service http:InterceptableService / on new http:Listener(8090) {
                     message: customError
                 }
             };
+        }
+
+        gh:EmailVerificationResponse {status, githubUserId} = result;
+        if status == "verified" && githubUserId is string {
+            scim:User|error? updatedUser
+                    = scim:updateGithubUserId(githubUserId = githubUserId, email = userInfo.email);
+
+            if updatedUser is error {
+                string customError = "Error while updating GitHub user ID for the user!";
+                log:printError(customError, updatedUser);
+                return <http:InternalServerError>{
+                    body: {
+                        message: customError
+                    }
+                };
+            }
+            if updatedUser is () {
+                string customError = "User not found for the email!";
+                log:printError(customError, email = userInfo.email);
+                return <http:InternalServerError>{
+                    body: {
+                        message: customError
+                    }
+                };
+            }
         }
         return result;
     }
