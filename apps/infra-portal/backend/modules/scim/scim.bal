@@ -16,24 +16,6 @@
 
 import ballerina/io;
 
-// import ballerina/http;
-
-// # Search users from Asgardeo.
-// #
-// # + email - User email
-// # + return - Users result or error
-// public isolated function searchUser(string email) returns User[]|error {
-//     http:Response response = check scimOperationsClient->/organizations/internal/users/search.post({
-//         domain: "DEFAULT",
-//         filter: string `userName eq ${email}`,
-//         attributes: ["id", "userName", "profileUrl", "urn:scim:wso2:schema"]
-//     });
-//     if response.statusCode == http:STATUS_NO_CONTENT {
-//         return [];
-//     }
-//     UserSearchResult usersResult = check (check response.getJsonPayload()).cloneWithType();
-//     return usersResult.Resources;
-// }
 # Search users from Asgardeo.
 #
 # + email - User email
