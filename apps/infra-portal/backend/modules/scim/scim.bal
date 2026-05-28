@@ -14,8 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
 # Search users from Asgardeo.
 #
 # + email - User email
@@ -36,7 +34,6 @@ public isolated function searchUser(string email) returns User[]|error {
 # + return - Updated user or error
 public isolated function updateGithubUserId(string email, string githubUserId) returns User|error? {
     User[] users = check searchUser(email);
-    io:println("Search users response: ", users);
     if users[0].urn\:scim\:schemas\:extension\:custom\:User?.githubUserId != githubUserId {
         return scimOperationsClient->/organizations/internal/users/[users[0].id].patch({githubUserId});
     }
