@@ -1807,7 +1807,7 @@ service http:InterceptableService / on new http:Listener(8090) {
             gh:GitHubUser|error gitHubUser = gh:getUserDetails(gitHubUserId);
             if gitHubUser is error {
                 string customError = "Error while fetching GitHub user details!";
-                log:printError(customError, gitHubUser, githubUserId = gitHubUserId);
+                log:printError(customError, gitHubUser);
                 return <http:InternalServerError>{
                     body: {
                         message: customError
