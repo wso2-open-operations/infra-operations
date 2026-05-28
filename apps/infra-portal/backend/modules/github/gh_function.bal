@@ -472,3 +472,14 @@ public isolated function addOrUpdateTeamMemberships(AddOrUpdateTeamMemberInforma
     };
 }
 
+# API Call to get GitHub user details by user ID.
+#
+# + githubUserId - GitHub user ID
+# + return - GitHub user details or error
+public isolated function getUserDetails(string githubUserId) returns GitHubUser|error {
+    http:Client|error githubClient = createGithubClient();
+    if githubClient is error {
+        return githubClient;
+    }
+    return githubClient->/users/[githubUserId].get();
+}

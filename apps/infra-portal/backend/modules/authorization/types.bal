@@ -16,10 +16,16 @@
 
 # User info custom type for Asgardeo token.
 public type CustomJwtPayload record {
+    # UUID
+    string sub;
     # User email 
     string email;
     # User groups
     string[] groups;
+    # User id
+    string userid;
+    # Github User ID
+    string? githubUserId = ();
 };
 
 # Application specific role mapping.
