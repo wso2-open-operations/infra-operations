@@ -1766,6 +1766,7 @@ service http:InterceptableService / on new http:Listener(8090) {
     # + return - List of successful responses and failed responses or error
     isolated resource function put set\-default\-repository\-access(http:RequestContext ctx)
         returns gh:AddOrUpdateTeamMemberResponse|http:Forbidden|http:InternalServerError {
+
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
             return <http:InternalServerError>{
@@ -1781,6 +1782,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
+
         entity:Employee|error? employee = entity:fetchEmployeesBasicInfo(userInfo.email);
         if employee is error {
             string customError = "Error while fetching employee information!";
@@ -1802,23 +1804,40 @@ service http:InterceptableService / on new http:Listener(8090) {
         }
 
         string? gitHubUserId = userInfo.githubUserId;
-        gh:AddOrUpdateTeamMemberResponse|error result = error("No team membership changes made as the employment type does not match any criteria.");
-        if gitHubUserId is string {
-            gh:GitHubUser|error gitHubUser = gh:getUserDetails(gitHubUserId);
-            if gitHubUser is error {
-                string customError = "Error while fetching GitHub user details!";
-                log:printError(customError, gitHubUser);
-                return <http:InternalServerError>{
-                    body: {
-                        message: customError
-                    }
-                };
-            }
+        if gitHubUserId is () {
+            return <http:Forbidden>{
+                body: {message: "GitHub account is not verified."}
+            };
+        }
 
-            string gitHubUserName = gitHubUser.login;
-            if employee.employmentType is PERMANENT {
-                gh:AddOrUpdateTeamMemberInformationInput[] inputs
+        gh:AddOrUpdateTeamMemberResponse|error result
+            = error("No team membership changes made as the employment type does not match any criteria.");
+
+        gh:GitHubUser|error gitHubUser = gh:getUserDetails(gitHubUserId);
+        if gitHubUser is error {
+            string customError = "Error while fetching GitHub user details!";
+            log:printError(customError, gitHubUser);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        string gitHubUserName = gitHubUser.login;
+        if employee.employmentType is PERMANENT {
+            gh:AddOrUpdateTeamMemberInformationInput[] inputs
                 = from gh:OrganizationAndTeam organizationAndTeam in gh:PERMANENT_DEFAULT_TEAM_ACCESS
+                select {
+                    orgName: organizationAndTeam.orgName,
+                    teamSlug: organizationAndTeam.teamSlug,
+                    userName: gitHubUserName,
+                    role: gh:MEMBER
+                };
+
+            if employee.department is CUSTOMER_SUCCESS_DEPARTMENT {
+                gh:AddOrUpdateTeamMemberInformationInput[] customerSuccessInputs
+                    = from gh:OrganizationAndTeam organizationAndTeam in gh:CS_TEAM_ACCESS
                     select {
                         orgName: organizationAndTeam.orgName,
                         teamSlug: organizationAndTeam.teamSlug,
@@ -1826,34 +1845,23 @@ service http:InterceptableService / on new http:Listener(8090) {
                         role: gh:MEMBER
                     };
 
-                if employee.department is CUSTOMER_SUCCESS_DEPARTMENT {
-                    gh:AddOrUpdateTeamMemberInformationInput[] customerSuccessInputs
-                    = from gh:OrganizationAndTeam organizationAndTeam in gh:CS_TEAM_ACCESS
-                        select {
-                            orgName: organizationAndTeam.orgName,
-                            teamSlug: organizationAndTeam.teamSlug,
-                            userName: gitHubUserName,
-                            role: gh:MEMBER
-                        };
-
-                    inputs.push(...customerSuccessInputs);
-                }
-                result = gh:addOrUpdateTeamMemberships(inputs);
+                inputs.push(...customerSuccessInputs);
             }
-
-            if employee.employmentType is INTERNSHIP {
-                gh:AddOrUpdateTeamMemberInformationInput[] inputs
-                = from string organization in gh:INTERNS_DEFAULT_ORGANIZATIONS
-                    select {
-                        orgName: organization,
-                        teamSlug: WSO2_ALL_INTERNS_TEAM_SLUG,
-                        userName: gitHubUserName,
-                        role: gh:MEMBER
-                    };
-
-                result = gh:addOrUpdateTeamMemberships(inputs);
-            }
+            result = gh:addOrUpdateTeamMemberships(inputs);
         }
+        if employee.employmentType is INTERNSHIP {
+            gh:AddOrUpdateTeamMemberInformationInput[] inputs
+                = from string organization in gh:INTERNS_DEFAULT_ORGANIZATIONS
+                select {
+                    orgName: organization,
+                    teamSlug: WSO2_ALL_INTERNS_TEAM_SLUG,
+                    userName: gitHubUserName,
+                    role: gh:MEMBER
+                };
+
+            result = gh:addOrUpdateTeamMemberships(inputs);
+        }
+
         if result is error {
             string customError = "Error while adding/updating team membership for the employee!";
             log:printError(customError, result);
