@@ -34,6 +34,9 @@ public isolated function searchUser(string email) returns User[]|error {
 # + return - Updated user or error
 public isolated function updateGithubUserId(string email, string githubUserId) returns User|error? {
     User[] users = check searchUser(email);
+    if users.length() == 0 {
+        return ();
+    }
     if users[0].urn\:scim\:schemas\:extension\:custom\:User?.githubUserId != githubUserId {
         return scimOperationsClient->/organizations/internal/users/[users[0].id].patch({githubUserId});
     }
