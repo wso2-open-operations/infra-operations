@@ -132,9 +132,13 @@ export default function RequestHistoryTable({
       </Typography>,
       ConfirmationType.accept,
       async () => {
-        handleCloseTakeDecisionDialog();
-        await dispatch(approveRepositoryRequest(requestId));
-        refetch();
+        try {
+          await dispatch(approveRepositoryRequest(requestId)).unwrap();
+          handleCloseTakeDecisionDialog();
+          refetch();
+        } catch {
+          // Approval failed; keep the dialog open. The thunk surfaces an error snackbar.
+        }
       },
       "Approve",
       "Cancel",
@@ -158,16 +162,21 @@ export default function RequestHistoryTable({
       ConfirmationType.accept,
       async (comment?: string) => {
         if (typeof comment === "string" && comment.trim() !== "") {
-          handleCloseTakeDecisionDialog();
-          await dispatch(
-            addComments({
-              requestId: requestId,
-              authorEmail: leadEmailProp || adminEmailProp || "",
-              commentText: `[REJECTED]-${comment}`,
-            }),
-          );
-          await dispatch(rejectRepositoryRequest(requestId));
-          refetch();
+          try {
+            // Save the mandatory rejection comment first; only reject if it succeeds.
+            await dispatch(
+              addComments({
+                requestId: requestId,
+                authorEmail: leadEmailProp || adminEmailProp || "",
+                commentText: `[REJECTED]-${comment}`,
+              }),
+            ).unwrap();
+            await dispatch(rejectRepositoryRequest(requestId)).unwrap();
+            handleCloseTakeDecisionDialog();
+            refetch();
+          } catch {
+            // Comment or rejection failed; do not proceed. The thunk surfaces an error snackbar.
+          }
         }
       },
       "Reject",

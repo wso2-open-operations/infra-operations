@@ -50,8 +50,12 @@ export default function ReviewRequests() {
         {isAdmin && <Tab label="All Requests" />}
       </Tabs>
 
-      {activeTab === 0 && <RequestHistoryTable leadEmailProp={userInfo?.workEmail} />}
-      {activeTab === 1 && isAdmin && <RequestHistoryTable adminEmailProp={userInfo?.workEmail} />}
+      {activeTab === 0 && userInfo?.workEmail && (
+        <RequestHistoryTable leadEmailProp={userInfo.workEmail} />
+      )}
+      {activeTab === 1 && isAdmin && userInfo?.workEmail && (
+        <RequestHistoryTable adminEmailProp={userInfo.workEmail} />
+      )}
     </Box>
   );
 }

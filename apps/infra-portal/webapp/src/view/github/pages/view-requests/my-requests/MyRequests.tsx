@@ -33,7 +33,7 @@ export default function MyRequests() {
       <Typography variant="body2" sx={{ color: theme.palette.customText.primary.p3.active }}>
         View, edit and resubmit your pending requests, and track their decisions.
       </Typography>
-      <RequestHistoryTable memberEmailProp={userInfo?.workEmail} />
+      {userInfo?.workEmail && <RequestHistoryTable memberEmailProp={userInfo.workEmail} />}
     </Box>
   );
 }

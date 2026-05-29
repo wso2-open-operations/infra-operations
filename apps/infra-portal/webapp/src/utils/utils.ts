@@ -170,13 +170,16 @@ export const topicsValidation = yup
 export const urlValidation = yup
   .string()
   .trim()
-  .transform((v) => (v === "" ? undefined : v))
-  .test("has-protocol-allowlist", "Website URL must start with http:// or https://", (value) => {
+  // Normalize bare domains (e.g. "example.com") to "https://example.com" so the
+  // allowlist test and the subsequent .url() check both accept them, matching sanitizeUrl().
+  .transform((v) => {
+    if (!v) return undefined;
+    return URL_SCHEMA_PATTERN.test(v) ? v : `https://${v}`;
+  })
+  .test("protocol-allowlist", "Website URL must start with http:// or https://", (value) => {
     if (!value) return true;
     try {
-      const toCheck = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value) ? value : `https://${value}`;
-      const u = new URL(toCheck);
-      return ALLOWED_URL_PROTOCOLS.includes(u.protocol);
+      return ALLOWED_URL_PROTOCOLS.includes(new URL(value).protocol);
     } catch {
       return false;
     }

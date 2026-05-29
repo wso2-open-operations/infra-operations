@@ -56,15 +56,19 @@ export default function CommentSection({
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
-    await dispatch(
-      addComments({
-        requestId: requestId,
-        authorEmail: currentUserEmail,
-        commentText: commentText,
-      }),
-    );
-    setCommentText("");
-    dispatch(fetchComments(requestId));
+    try {
+      await dispatch(
+        addComments({
+          requestId: requestId,
+          authorEmail: currentUserEmail,
+          commentText: commentText,
+        }),
+      ).unwrap();
+      setCommentText("");
+      dispatch(fetchComments(requestId));
+    } catch {
+      // Keep the draft so the user can retry; the thunk already surfaces an error snackbar.
+    }
   };
 
   return (

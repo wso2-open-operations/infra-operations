@@ -40,12 +40,18 @@ interface RepositoryRequestDetailsProps {
   request: RepositoryRequest | null;
 }
 
-const toLines = (value: string | undefined) =>
-  (value || "").split(",").map((entry, idx) => (
+const toLines = (value: string | undefined) => {
+  const entries = (value || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (entries.length === 0) return undefined;
+  return entries.map((entry, idx) => (
     <Typography variant="body2" key={idx} sx={{ display: "block", wordBreak: "break-all" }}>
-      {entry.trim()}
+      {entry}
     </Typography>
   ));
+};
 
 export default function RepositoryRequestDetails({ request }: RepositoryRequestDetailsProps) {
   if (!request) {

@@ -116,22 +116,34 @@ const validationSchema = yup.object({
   disableTriageReason: yup.string().when(["enableTriageWso2All", "enableTriageWso2AllInterns"], {
     is: (enableTriageWso2All: string, enableTriageWso2AllInterns: string) =>
       enableTriageWso2All !== "Yes" || enableTriageWso2AllInterns !== "Yes",
-    then: (schema) => schema.required("Disable Triage Reason is required."),
+    then: (schema) =>
+      schema
+        .required("Disable Triage Reason is required.")
+        .notOneOf(["N/A"], "Please provide a reason for disabling triage access."),
   }),
 
   // Step 3: CI/CD Details
   cicdRequirement: yup.string().trim(),
   jenkinsJobType: yup.string().when("cicdRequirement", {
     is: "Jenkins",
-    then: (schema) => schema.required("Jenkins Job Type is required."),
+    then: (schema) =>
+      schema
+        .required("Jenkins Job Type is required.")
+        .notOneOf(["N/A"], "Jenkins Job Type is required."),
   }),
   azureDevopsOrg: yup.string().when("cicdRequirement", {
     is: "Azure",
-    then: (schema) => schema.required("Azure DevOps Organization is required."),
+    then: (schema) =>
+      schema
+        .required("Azure DevOps Organization is required.")
+        .notOneOf(["N/A"], "Azure DevOps Organization is required."),
   }),
   azureDevopsProject: yup.string().when("cicdRequirement", {
     is: "Azure",
-    then: (schema) => schema.required("Azure DevOps Project is required."),
+    then: (schema) =>
+      schema
+        .required("Azure DevOps Project is required.")
+        .notOneOf(["N/A"], "Azure DevOps Project is required."),
   }),
 });
 
@@ -315,9 +327,13 @@ export default function RepoRequestForm({
       </Box>,
       ConfirmationType.accept,
       async () => {
-        await dispatch(addRepositoryRequests(formData));
-        resetForm();
-        setCurrentStep(0);
+        try {
+          await dispatch(addRepositoryRequests(formData)).unwrap();
+          resetForm();
+          setCurrentStep(0);
+        } catch {
+          // Creation failed; keep the form state so the user can retry.
+        }
       },
       "Confirm",
       "Cancel",
@@ -364,14 +380,18 @@ export default function RepoRequestForm({
       </Typography>,
       ConfirmationType.accept,
       async () => {
-        await dispatch(
-          updateRepositoryRequest({
-            id: editRequestData.id,
-            ...updatedFields,
-            state: RequestApprovalState.PENDING,
-          }),
-        );
-        onUpdateSuccess?.();
+        try {
+          await dispatch(
+            updateRepositoryRequest({
+              id: editRequestData.id,
+              ...updatedFields,
+              state: RequestApprovalState.PENDING,
+            }),
+          ).unwrap();
+          onUpdateSuccess?.();
+        } catch {
+          // Update failed; keep the dialog open so the user can retry.
+        }
       },
       "Yes",
       "No",
@@ -452,6 +472,22 @@ export default function RepoRequestForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.values.cicdRequirement]);
+
+  // Keep disableTriageReason in sync with whether it is required, so the placeholder
+  // "N/A" never satisfies the required check when the user must actually provide a reason.
+  useEffect(() => {
+    const reasonRequired =
+      formik.values.enableTriageWso2All === "No" ||
+      formik.values.enableTriageWso2AllInterns === "No";
+    if (reasonRequired) {
+      if (formik.values.disableTriageReason === "N/A") {
+        formik.setFieldValue("disableTriageReason", "", false);
+      }
+    } else if (!formik.values.disableTriageReason?.trim()) {
+      formik.setFieldValue("disableTriageReason", "N/A", false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.enableTriageWso2All, formik.values.enableTriageWso2AllInterns]);
 
   useEffect(() => {
     if (
