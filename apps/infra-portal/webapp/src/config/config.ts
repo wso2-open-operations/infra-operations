@@ -61,6 +61,15 @@ export const APP_NAME = window.config?.APP_NAME ?? "";
 export const APP_DOMAIN = window.config?.APP_DOMAIN ?? "";
 export const ServiceBaseUrl = window.config?.REACT_APP_BACKEND_BASE_URL ?? "";
 
+// Repository creation request form limits and feature flags
+export const GITHUB_REPO_NAME_MAX = 100;
+export const GITHUB_DESCRIPTION_MAX = 350;
+export const GITHUB_TOPIC_MAX_COUNT = 20;
+export const GITHUB_TOPIC_MAX_LENGTH = 50;
+export const ALLOWED_URL_PROTOCOLS = ["http:", "https:"];
+// CI/CD step is gated until the feature ships.
+export const CICD_CONFIGURATION_ENABLE = false;
+
 export const AppConfig = {
   serviceUrls: {
     userInfo: ServiceBaseUrl + "/user-info",
