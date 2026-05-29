@@ -25,6 +25,13 @@ const githubSettings = lazy(() => import("@view/admin/github-settings/GithubSett
 const repositoryAccessRequests = lazy(
   () => import("@view/github/pages/repository-access/RepositoryAccessRequests"),
 );
+const repositoryCreationRequests = lazy(
+  () => import("@view/github/pages/repository-creation-requests/RepositoryCreationRequests"),
+);
+const myRequests = lazy(() => import("@view/github/pages/view-requests/my-requests/MyRequests"));
+const reviewRequests = lazy(
+  () => import("@view/github/pages/view-requests/review-requests/ReviewRequests"),
+);
 export const View = {
   help,
   nestedPage,
@@ -34,4 +41,7 @@ export const View = {
   admin,
   githubSettings,
   repositoryAccessRequests,
+  repositoryCreationRequests,
+  myRequests,
+  reviewRequests,
 };

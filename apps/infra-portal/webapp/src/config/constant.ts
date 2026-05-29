@@ -104,6 +104,13 @@ export const SnackMessage = {
   warning: {},
 };
 
+export const JENKINS_JOB_TYPES = ["product-*", "carbon-*", "identity-*", "apim-*", "esb-*"];
+
+export const BRANCH_PROTECTION_TYPES = {
+  Default: "Default",
+  Ballerina_library: "Bal Lib Repo",
+};
+
 export const APP_DESC = " Internal App Product Template.";
 
 export const redirectUrl = "iapm-marketplace-redirect-url";
