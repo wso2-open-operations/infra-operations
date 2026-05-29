@@ -47,14 +47,32 @@ public function main() returns error? {
         scim:User user = userResult[0];
         boolean jobTitleNeedsUpdate = user.urn\:scim\:wso2\:schema?.jobtitle != employee.jobRole;
         boolean profileUrlNeedsUpdate = user.profileUrl != employee.employeeThumbnail;
+        boolean businessUnitNeedsUpdate =
+            user.urn\:scim\:schemas\:extension\:custom\:User?.businessUnit != employee.businessUnit;
+        boolean departmentNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.team != employee.department;
+        boolean teamNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.subTeam != employee.team;
+        boolean subTeamNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.unit != employee.subTeam;
 
-        if jobTitleNeedsUpdate || profileUrlNeedsUpdate {
+        if jobTitleNeedsUpdate || profileUrlNeedsUpdate || businessUnitNeedsUpdate || departmentNeedsUpdate ||
+            teamNeedsUpdate || subTeamNeedsUpdate {
             scim:UserUpdatePayload updatePayload = {};
             if jobTitleNeedsUpdate {
                 updatePayload.jobTitle = employee.jobRole ?: "";
             }
             if profileUrlNeedsUpdate {
                 updatePayload.profileUrl = employee.employeeThumbnail ?: "";
+            }
+            if businessUnitNeedsUpdate {
+                updatePayload.businessUnit = employee.businessUnit ?: "";
+            }
+            if departmentNeedsUpdate {
+                updatePayload.team = employee.department ?: "";
+            }
+            if teamNeedsUpdate {
+                updatePayload.subTeam = employee.team ?: "";
+            }
+            if subTeamNeedsUpdate {
+                updatePayload.unit = employee.subTeam ?: "";
             }
             scim:User|error updatedUser = scim:updateUser(updatePayload, user.id);
             if updatedUser is error {

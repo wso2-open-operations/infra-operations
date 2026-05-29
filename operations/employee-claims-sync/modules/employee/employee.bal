@@ -29,6 +29,10 @@ public isolated function getEmployees(EmployeeFilter filters = {}) returns Emplo
                 workEmail
                 employeeThumbnail
                 jobRole
+                businessUnit
+                department
+                team
+                subTeam
             }
         }
     `;
@@ -54,7 +58,11 @@ public isolated function getEmployees(EmployeeFilter filters = {}) returns Emplo
                 employeeId: empResp.employeeId ?: "",
                 workEmail: empResp.workEmail ?: "",
                 employeeThumbnail: empResp.employeeThumbnail,
-                jobRole: empResp?.jobRole
+                jobRole: empResp?.jobRole,
+                businessUnit: empResp?.businessUnit,
+                department: empResp?.department,
+                team: empResp?.team,
+                subTeam: empResp?.subTeam
             };
         employees.push(...batchEmployees);
         fetchMore = batch.length() > 0;
