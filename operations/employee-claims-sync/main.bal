@@ -30,25 +30,33 @@ public function main() returns error? {
             {employeeStatus: [employee:EmployeeStatusActive, employee:EmployeeStatusMarkedLeaver]});
     log:printInfo("Successfully fetched employee data. Total employees: " + employees.length().toString());
     int count = 0;
+    int employeeCount = 0;
     int updateFailureCount = 0;
     foreach employee:Employee employee in employees {
+        employeeCount += 1;
         if count > 0 && count % 100 == 0 {
-            log:printInfo(string `Processed ${count} employees so far...`);
+            log:printInfo(string `Processed ${count} SCIM requests so far. Total employees processed: ${employeeCount}.`);
             log:printInfo("Waiting for 1 minute to avoid hitting rate limits...");
-            // Wait for 1 minute after processing every 100 employees to avoid hitting rate limits.
+            // Wait for 1 minute after processing every 100 SCIM requests to avoid hitting rate limits.
             runtime:sleep(60);
         }
         scim:User[] userResult = check scim:searchUser(employee.workEmail.toLowerAscii());
+        count += 1;
         if userResult.length() == 0 {
             log:printWarn(string `employee with ID: ${employee.employeeId} does not exist in Asgardeo. Skipping...`);
-            count += 1;
             continue;
         }
         scim:User user = userResult[0];
         boolean jobTitleNeedsUpdate = user.urn\:scim\:wso2\:schema?.jobtitle != employee.jobRole;
         boolean profileUrlNeedsUpdate = user.profileUrl != employee.employeeThumbnail;
+        boolean businessUnitNeedsUpdate =
+            user.urn\:scim\:schemas\:extension\:custom\:User?.businessUnit != employee.businessUnit;
+        boolean departmentNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.team != employee.department;
+        boolean teamNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.subTeam != employee.team;
+        boolean subTeamNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.unit != employee.subTeam;
 
-        if jobTitleNeedsUpdate || profileUrlNeedsUpdate {
+        if jobTitleNeedsUpdate || profileUrlNeedsUpdate || businessUnitNeedsUpdate || departmentNeedsUpdate ||
+            teamNeedsUpdate || subTeamNeedsUpdate {
             scim:UserUpdatePayload updatePayload = {};
             if jobTitleNeedsUpdate {
                 updatePayload.jobTitle = employee.jobRole ?: "";
@@ -56,7 +64,20 @@ public function main() returns error? {
             if profileUrlNeedsUpdate {
                 updatePayload.profileUrl = employee.employeeThumbnail ?: "";
             }
+            if businessUnitNeedsUpdate {
+                updatePayload.businessUnit = employee.businessUnit ?: "";
+            }
+            if departmentNeedsUpdate {
+                updatePayload.team = employee.department ?: "";
+            }
+            if teamNeedsUpdate {
+                updatePayload.subTeam = employee.team ?: "";
+            }
+            if subTeamNeedsUpdate {
+                updatePayload.unit = employee.subTeam ?: "";
+            }
             scim:User|error updatedUser = scim:updateUser(updatePayload, user.id);
+            count += 1;
             if updatedUser is error {
                 log:printError(string `Failed to update employee ${user.id} in Asgardeo.`, updatedUser);
                 updateFailureCount += 1;
@@ -64,7 +85,6 @@ public function main() returns error? {
                 log:printDebug(string `Successfully updated employee ${user.id} in Asgardeo.`);
             }
         }
-        count += 1;
     }
 
     if updateFailureCount == 0 {

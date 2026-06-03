@@ -58,6 +58,14 @@ public type Employee record {|
     string? employeeThumbnail;
     # Job role of the employee
     string? jobRole;
+    # Business unit
+    string? businessUnit;
+    # Department
+    string? department;
+    # Team
+    string? team;
+    # Sub team
+    string? subTeam;
     json...;
 |};
 
@@ -71,6 +79,14 @@ public type EmployeeResponse record {|
     string? employeeThumbnail;
     # Job role of the employee
     string? jobRole?;
+    # Business unit
+    string? businessUnit?;
+    # Department
+    string? department?;
+    # Team
+    string? team?;
+    # Sub team
+    string? subTeam?;
     json...;
 |};
 

@@ -49,6 +49,21 @@ public type User record {|
     string profileUrl?;
     # Schema scope
     SchemaScope urn\:scim\:wso2\:schema?;
+    # Custom user schema scope
+    CustomerSchemaScope urn\:scim\:schemas\:extension\:custom\:User?;
+    json...;
+|};
+
+# Custom schema scope for user attributes.
+public type CustomerSchemaScope record {|
+    # Business unit
+    string? businessUnit = ();
+    # Team
+    string? team = ();
+    # Sub Team
+    string? subTeam = ();
+    # Unit
+    string? unit = ();
     json...;
 |};
 
@@ -71,4 +86,12 @@ public type UserUpdatePayload record {|
     string profileUrl?;
     # Job title
     string jobTitle?;
+    # Business unit
+    string businessUnit?;
+    # Team
+    string team?;
+    # Sub team
+    string subTeam?;
+    # Unit
+    string unit?;
 |};
