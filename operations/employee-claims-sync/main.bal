@@ -59,7 +59,7 @@ public function main() returns error? {
             user.urn\:scim\:schemas\:extension\:custom\:User?.employeeId != employee.employeeId;
 
         if jobTitleNeedsUpdate || profileUrlNeedsUpdate || businessUnitNeedsUpdate || departmentNeedsUpdate ||
-            teamNeedsUpdate || subTeamNeedsUpdate {
+            teamNeedsUpdate || subTeamNeedsUpdate || employeeIdNeedsUpdate {
             scim:UserUpdatePayload updatePayload = {};
             if jobTitleNeedsUpdate {
                 updatePayload.jobTitle = employee.jobRole ?: "";
