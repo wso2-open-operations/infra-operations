@@ -94,8 +94,10 @@ public function main() returns error? {
     }
 
     if updateFailureCount == 0 {
-        log:printInfo("Employee claims sync completed successfully.");
+        log:printInfo(string `Employee claims sync completed successfully. Total employees processed: ${
+            employeeCount}. Total SCIM requests made: ${count}. Update failure count: ${updateFailureCount}.`);
     } else {
-        log:printInfo(string `Employee claims sync completed with ${updateFailureCount} update failure(s).`);
+        log:printInfo(string `Employee claims sync completed with some failures. Total employees processed: ${
+            employeeCount}. Total SCIM requests made: ${count}. Update failure count: ${updateFailureCount}.`);
     }
 }
