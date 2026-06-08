@@ -35,7 +35,8 @@ public function main() returns error? {
     foreach employee:Employee employee in employees {
         employeeCount += 1;
         if count > 0 && count % 100 == 0 {
-            log:printInfo(string `Processed ${count} SCIM requests so far. Total employees processed: ${employeeCount}.`);
+            log:printInfo(string `Processed ${count} SCIM requests so far. Total employees processed: ${
+                employeeCount}.`);
             log:printInfo("Waiting for 1 minute to avoid hitting rate limits...");
             // Wait for 1 minute after processing every 100 SCIM requests to avoid hitting rate limits.
             runtime:sleep(60);
@@ -54,9 +55,11 @@ public function main() returns error? {
         boolean departmentNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.team != employee.department;
         boolean teamNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.subTeam != employee.team;
         boolean subTeamNeedsUpdate = user.urn\:scim\:schemas\:extension\:custom\:User?.unit != employee.subTeam;
+        boolean employeeIdNeedsUpdate =
+            user.urn\:scim\:schemas\:extension\:custom\:User?.employeeId != employee.employeeId;
 
         if jobTitleNeedsUpdate || profileUrlNeedsUpdate || businessUnitNeedsUpdate || departmentNeedsUpdate ||
-            teamNeedsUpdate || subTeamNeedsUpdate {
+            teamNeedsUpdate || subTeamNeedsUpdate || employeeIdNeedsUpdate {
             scim:UserUpdatePayload updatePayload = {};
             if jobTitleNeedsUpdate {
                 updatePayload.jobTitle = employee.jobRole ?: "";
@@ -76,6 +79,9 @@ public function main() returns error? {
             if subTeamNeedsUpdate {
                 updatePayload.unit = employee.subTeam ?: "";
             }
+            if employeeIdNeedsUpdate {
+                updatePayload.employeeId = employee.employeeId;
+            }
             scim:User|error updatedUser = scim:updateUser(updatePayload, user.id);
             count += 1;
             if updatedUser is error {
@@ -88,8 +94,10 @@ public function main() returns error? {
     }
 
     if updateFailureCount == 0 {
-        log:printInfo("Employee claims sync completed successfully.");
+        log:printInfo(string `Employee claims sync completed successfully. Total employees processed: ${
+            employeeCount}. Total SCIM requests made: ${count}. Update failure count: ${updateFailureCount}.`);
     } else {
-        log:printInfo(string `Employee claims sync completed with ${updateFailureCount} update failure(s).`);
+        log:printInfo(string `Employee claims sync completed with some failures. Total employees processed: ${
+            employeeCount}. Total SCIM requests made: ${count}. Update failure count: ${updateFailureCount}.`);
     }
 }

@@ -64,6 +64,8 @@ public type CustomerSchemaScope record {|
     string? subTeam = ();
     # Unit
     string? unit = ();
+    # Employee ID
+    string? employeeId = ();
     json...;
 |};
 
@@ -94,4 +96,6 @@ public type UserUpdatePayload record {|
     string subTeam?;
     # Unit
     string unit?;
+    # Employee ID
+    string employeeId?;
 |};
