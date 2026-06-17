@@ -17,5 +17,5 @@ endpoints:
       port: 9090
     type: REST
     networkVisibilities:
-      - Organization
+      - Public
     schemaFilePath: openapi-send-email.yaml
