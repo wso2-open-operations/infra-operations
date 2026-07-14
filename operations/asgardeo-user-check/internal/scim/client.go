@@ -96,7 +96,8 @@ func (c *Client) do(ctx context.Context, method, path string, body []byte) ([]by
 	}
 	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
+	// 1 MiB limit to prevent memory exhaustion from unexpectedly large responses.
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return nil, fmt.Errorf("scim: read response body: %w", err)
 	}

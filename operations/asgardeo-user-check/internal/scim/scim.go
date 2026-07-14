@@ -39,7 +39,7 @@ const (
 func (c *Client) CheckUserExists(ctx context.Context, email string) (bool, error) {
 	reqBody, err := json.Marshal(searchRequest{
 		Attributes:   []string{attrUserName},
-		Filter:       fmt.Sprintf("userName eq %s", email),
+		Filter:       fmt.Sprintf("userName eq %q", email),
 		ItemsPerPage: 1,
 	})
 	if err != nil {
