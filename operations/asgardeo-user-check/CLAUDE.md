@@ -2,7 +2,7 @@
 
 Go HTTP server (`net/http`, Go 1.25+) with a single public, unauthenticated
 endpoint: check whether a user exists in the external Asgardeo organization
-by email, returning `{"exists": bool, "locked": bool|omitted}` — no other user
+by email, returning `{"exists": bool, "locked": bool|null}` — no other user
 attributes (name, phone, claims, etc.) are ever read or returned.
 
 ## Middleware chain
@@ -30,11 +30,15 @@ internal-org endpoints and should not be wired to them.
 
 `CheckUserExists` requests the minimal attribute set (`userName` and the
 `urn:scim:wso2:schema` extension) and `itemsPerPage: 1`, and reads only
-`totalResults` and `Resources[0].urn:scim:wso2:schema.accountLocked` from the
-response. `scimUser` (`internal/scim/types.go`) intentionally has no other
-fields — do not add more of the SCIM response to it (name, phone, claims,
-etc.) without an explicit request, since the whole point of this service is
-to expose nothing beyond existence and lock state.
+`totalResults` plus two fields of the `urn:scim:wso2:schema` extension:
+`accountLocked` (checked first) and `accountState` (fallback, mapped
+`LOCKED`/`UNLOCKED` → bool). `accountLocked` comes back from Asgardeo as a
+quoted string (`"true"`/`"false"`), not a JSON boolean — it's typed `*string`
+in `scimUser` (`internal/scim/types.go`) and parsed explicitly; do not change
+it back to `*bool`. `scimUser` intentionally has no other fields — do not add
+more of the SCIM response to it (name, phone, claims, etc.) without an
+explicit request, since the whole point of this service is to expose nothing
+beyond existence and lock state.
 
 ## Running locally
 
@@ -59,7 +63,7 @@ make build   # runs tests then compiles ./cmd/server
 - **Body size**: capped with `http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)` (4 KiB) before reading — this endpoint takes a single short field, so the limit is intentionally tight
 - **Email validation**: `emailPattern` in `internal/handler/users.go` is a strict allowlist regex, not just format validation — it exists to prevent SCIM filter injection, since the email is interpolated directly into a `userName eq <email>` filter expression. Do not relax it to accept quotes, parentheses, or whitespace
 - **Upstream errors**: always use `mapUpstreamError(w, err, "<fallback message>")` — never write custom status mappings inline
-- **Response**: only ever return `{"exists": bool, "locked": bool|omitted}` — do not add fields from the SCIM response to this endpoint's output, even if convenient, since the whole point of this service is to expose nothing beyond existence and lock state
+- **Response**: only ever return `{"exists": bool, "locked": bool|null}` — do not add fields from the SCIM response to this endpoint's output, even if convenient, since the whole point of this service is to expose nothing beyond existence and lock state
 
 ## Security
 

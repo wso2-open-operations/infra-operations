@@ -23,8 +23,8 @@ Response:
 { "exists": true, "locked": false }
 ```
 
-`locked` is omitted when `exists` is `false`, or if Asgardeo did not return
-the account-locked field.
+`locked` is `null` when `exists` is `false`, or if Asgardeo did not return a
+determinate account-locked state.
 
 ## Configuration
 

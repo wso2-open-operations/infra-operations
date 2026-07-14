@@ -75,12 +75,14 @@ components:
       type: object
       required:
         - exists
+        - locked
       properties:
         exists:
           type: boolean
         locked:
           type: boolean
-          description: Account-locked state. Omitted when `exists` is false, or if Asgardeo did not return the field.
+          nullable: true
+          description: Account-locked state. Always present; null when `exists` is false, or if Asgardeo did not return a determinate lock state.
     ErrorPayload:
       type: object
       properties:
