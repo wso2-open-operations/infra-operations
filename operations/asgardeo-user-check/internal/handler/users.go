@@ -23,6 +23,8 @@ import (
 	"log/slog"
 	"net/http"
 	"regexp"
+
+	"github.com/wso2-open-operations/infra-operations/operations/asgardeo-user-check/internal/scim"
 )
 
 // maxRequestBodyBytes caps the request body size accepted by this public,
@@ -38,7 +40,7 @@ var emailPattern = regexp.MustCompile(`^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-
 // scimClient abstracts the SCIM operations used by UsersHandler, allowing the
 // handler to be tested independently of the real HTTP client.
 type scimClient interface {
-	CheckUserExists(ctx context.Context, email string) (bool, error)
+	CheckUserExists(ctx context.Context, email string) (scim.Result, error)
 }
 
 // UsersHandler handles HTTP requests for user existence checks.
@@ -51,19 +53,24 @@ func NewUsersHandler(scim scimClient) *UsersHandler {
 	return &UsersHandler{scim: scim}
 }
 
-// existsRequest is the POST /organizations/external/users/exists request shape.
+// existsRequest is the POST /organizations/external/users/validate request shape.
 type existsRequest struct {
 	Email string `json:"email"`
 }
 
-// existsResponse is the POST /organizations/external/users/exists response shape.
+// existsResponse is the POST /organizations/external/users/validate response
+// shape. Locked is always present in the JSON output — it is null when the
+// user does not exist, or when Asgardeo did not return a determinate
+// account-locked state (do not add omitempty here).
 type existsResponse struct {
-	Exists bool `json:"exists"`
+	Exists bool  `json:"exists"`
+	Locked *bool `json:"locked"`
 }
 
-// Exists handles POST /organizations/external/users/exists. It reports
+// Exists handles POST /organizations/external/users/validate. It reports
 // whether a user with the given email exists in the external Asgardeo
-// organization, without leaking any other user attributes.
+// organization and, if so, its account-locked state — without leaking any
+// other user attributes.
 func (h *UsersHandler) Exists(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
 	body, err := io.ReadAll(r.Body)
@@ -87,12 +94,12 @@ func (h *UsersHandler) Exists(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := h.scim.CheckUserExists(r.Context(), payload.Email)
+	result, err := h.scim.CheckUserExists(r.Context(), payload.Email)
 	if err != nil {
 		slog.ErrorContext(r.Context(), "scim CheckUserExists failed", "err", err)
 		mapUpstreamError(w, err, "Failed to check user existence.")
 		return
 	}
 
-	writeJSONValue(w, http.StatusOK, existsResponse{Exists: exists})
+	writeJSONValue(w, http.StatusOK, existsResponse{Exists: result.Exists, Locked: result.Locked})
 }

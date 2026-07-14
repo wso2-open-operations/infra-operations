@@ -20,7 +20,7 @@ paths:
 
   /organizations/external/users/validate:
     post:
-      summary: Check whether a user exists in the external Asgardeo organization.
+      summary: Check whether a user exists in the external Asgardeo organization, and its lock state.
       operationId: postExternalUsersValidate
       requestBody:
         description: Lookup payload
@@ -78,6 +78,9 @@ components:
       properties:
         exists:
           type: boolean
+        locked:
+          type: boolean
+          description: Account-locked state. Omitted when `exists` is false, or if Asgardeo did not return the field.
     ErrorPayload:
       type: object
       properties:

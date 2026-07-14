@@ -1,8 +1,8 @@
 # Asgardeo User Check
 
 A small, unauthenticated public service with a single endpoint: check whether
-a user exists in the external Asgardeo organization, by email, without
-exposing any other user attributes.
+a user exists in the external Asgardeo organization, by email, and whether
+their account is locked — without exposing any other user attributes.
 
 It is a thin client of the internal SCIM operations service, wired only to
 that service's external-organization user search endpoint.
@@ -20,8 +20,11 @@ Request:
 Response:
 
 ```json
-{ "exists": true }
+{ "exists": true, "locked": false }
 ```
+
+`locked` is omitted when `exists` is `false`, or if Asgardeo did not return
+the account-locked field.
 
 ## Configuration
 
@@ -61,5 +64,5 @@ curl http://localhost:8080/health
 
 curl -X POST http://localhost:8080/organizations/external/users/validate \
   -d '{"email":"user@example.com"}'
-# {"exists": true}
+# {"exists": true, "locked": false}
 ```
