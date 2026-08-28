@@ -51,8 +51,21 @@ public isolated function verifyReadOnlyTeam(string orgName) returns boolean|erro
 # + return - List of teams or error
 public isolated function getInternalCommitterTeams(string orgName) returns string[]|error {
     http:Client githubClient = check createGithubClient();
-    GitHubTeam[] teamsResponse = check githubClient->/orgs/[orgName]/teams/[INTERNAL_COMMITTER_TEAM_SLUG]/teams;
-    return from var team in teamsResponse
+    GitHubTeam[] allTeams = [];
+    int page = 1;
+
+    while true {
+        GitHubTeam[] pageTeams = check githubClient->/orgs/[orgName]/teams/[INTERNAL_COMMITTER_TEAM_SLUG]/teams(
+            perPage = DEFAULT_LIMIT, page = page
+        );
+        allTeams.push(...pageTeams);
+        if pageTeams.length() < DEFAULT_LIMIT {
+            break;
+        }
+        page += 1;
+    }
+
+    return from var team in allTeams
         where team.slug.includes(INTERNAL_COMMITTER_FORMAT)
         select team.slug;
 }
