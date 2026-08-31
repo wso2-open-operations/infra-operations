@@ -762,3 +762,40 @@ isolated function deleteDefaultTeamQuery(int teamId) returns sql:ParameterizedQu
     WHERE 
         team_id = ${teamId};
     `;
+
+# Upsert user default repository access by employee id.
+#
+# + employeeId - HR employee id
+# + status - Status of the default access (not_granted, granting, granted)
+# + return - Parameterized upsert query
+isolated function upsertUserDefaultRepositoryAccessQuery(string employeeId, string status)
+    returns sql:ParameterizedQuery => `
+    INSERT INTO user_default_repository_access (employee_id, status)
+    VALUES (${employeeId}, ${status})
+    ON DUPLICATE KEY UPDATE status = VALUES(status)
+`;
+
+# Get user default repository access by employee id.
+#
+# + employeeId - HR employee id
+# + return - Parameterized select query
+isolated function getUserDefaultRepositoryAccessQuery(string employeeId)
+    returns sql:ParameterizedQuery => `
+    SELECT id, employee_id, status
+    FROM user_default_repository_access
+    WHERE employee_id = ${employeeId}
+`;
+
+# Get default org/team rows by access type (PERMANENT | CS | INTERN).
+#
+# + accessType - Access category filter
+# + return - Parameterized select query
+isolated function getOrganizationDefaultRepositoriesByAccessTypeQuery(string accessType)
+    returns sql:ParameterizedQuery => `
+    SELECT
+        org_name,
+        team_slug,
+        access_type
+    FROM organizations_default_repositories
+    WHERE access_type = ${accessType}
+`;

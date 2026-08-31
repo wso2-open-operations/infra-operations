@@ -53,6 +53,10 @@ public type UserInfoResponse record {|
     string? employmentType;
     # User Privileges
     int[] privileges;
+    # GitHub user ID if the employee has linked their GitHub account
+    string? githubUserId;
+    # GitHub username if the employee has linked their GitHub account
+    string? githubUsername;
 |};
 
 # Repository Request List.
@@ -142,3 +146,29 @@ public type Comment record {
     # Comment text
     string commentText;
 };
+
+# Single repository under a default-access organization.
+public type DefaultAccessRepository record {|
+    # Repository name
+    string name;
+    # GitHub HTML URL
+    string htmlUrl;
+|};
+
+# Organization with repositories granted via default team access.
+public type DefaultAccessOrganization record {|
+    # GitHub organization login
+    string orgName;
+    # Organization avatar URL
+    string avatarUrl;
+    # Distinct repositories accessible via default teams
+    DefaultAccessRepository[] repositories;
+|};
+
+# Response for GET default-repository-access.
+public type DefaultRepositoryAccessResponse record {|
+    # Default access status: not_granted, granting, or granted
+    string status;
+    # Organizations and repos (empty when status is not granted)
+    DefaultAccessOrganization[] organizations;
+|};
