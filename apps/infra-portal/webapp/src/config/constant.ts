@@ -54,6 +54,13 @@ export const SnackMessage = {
 
     syncedOrganizationMessage:
       "Visibility has been updated to Public due to Free plan restrictions.",
+
+    setDefaultRepositoryAccessMessage: "Default repository access granted successfully.",
+    addAccessRequest: "Access request submitted successfully.",
+    fetchAccessRequestsMessage: "Successfully fetched access requests",
+
+    fetchRepoTeamLeadsMessage: "Successfully fetched repo team leads",
+    updateRepoTeamLeadMessage: "Successfully updated the team lead",
   },
   error: {
     addCommentMessage: "Unable to add the comment",
@@ -100,6 +107,13 @@ export const SnackMessage = {
 
     githubConnectMessage: "Connection failed. Please try again.",
     githubUnverifiedMessage: "No verified WSO2 email found on your GitHub account.",
+    setDefaultRepositoryAccessMessage: "Unable to grant default repository access. Please try again.",
+    addAccessRequest: "Unable to submit the access request.",
+    fetchAccessRequestsMessage: "Unable to retrieve access requests.",
+
+    syncRepoTeamLeadsFailedMessage: "Unable to sync repo team leads",
+    fetchRepoTeamLeadsFailedMessage: "Unable to retrieve repo team leads",
+    updateRepoTeamLeadFailedMessage: "Unable to update the team lead",
   },
   warning: {},
 };
@@ -120,3 +134,5 @@ export const GITHUB_OAUTH_SCOPES: string[] = ["read:user", "user:email"];
 export const RESULT_KEY = "gh_connect_result";
 export const GITHUB_OAUTH_STATE_KEY = "gh_oauth_state";
 export const STATE_EXPIRY_MS = 5 * 60 * 1000;
+export const PENDING_OAUTH_CODE_KEY = "gh_pending_oauth_code";
+export const OAUTH_CALLBACK_STATE_KEY = "gh_oauth_callback_state";

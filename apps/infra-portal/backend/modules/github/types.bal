@@ -91,8 +91,21 @@ type TokenResponse record {|
 
 # Record to represent a GitHub team.
 public type GitHubTeam record {|
-    # Team slug
+    # The name of the GitHub team
+    string name;
+    # The slug of the GitHub team
     string slug;
+    json...;
+|};
+
+# GitHub team member (list members payload).
+public type TeamMember record {|
+    # The login name of the team member
+    string login;
+    # The unique ID of the team member
+    int id;
+    # The email address of the team member
+    string? email?;
     json...;
 |};
 
@@ -381,6 +394,15 @@ public type OrganizationAndTeam record {
     string teamSlug;
 };
 
+# Minimal repository returned by team repos listing.
+public type TeamRepository record {|
+    # Repository name
+    string name;
+    # HTML URL of the repository
+    string url;
+    json...;
+|};
+
 # Team membership response for users.
 public type MembershipResponse record {|
     # The state of the membership.
@@ -665,4 +687,11 @@ public type EmailVerificationResponse record {|
     string? githubUserId = ();
     # GitHub username null if verification failed.
     string? githubUsername = ();
+|};
+
+# Repository from GET /orgs/{org}/repos.
+public type OrgRepository record {|
+    # The name of the repository
+    string name;
+    json...;
 |};

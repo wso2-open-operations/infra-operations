@@ -14,6 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import React from "react";
+import { View } from "@view/index";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -44,6 +46,10 @@ const AppHandler = () => {
           children: [
             ...getActiveRoutesV2(routes, auth.roles),
             { path: "github/callback", element: <GitHubConnect /> },
+            {
+              path: "request-existing-repo-access",
+              element: React.createElement(View.requestExistingRepoAccess),
+            },
           ],
         },
       ]),
@@ -52,7 +58,7 @@ const AppHandler = () => {
 
   useEffect(() => {
     if (auth.status === "loading") {
-      setAppState("loading");
+      setAppState((prev) => (prev === "success" ? "success" : "loading"));
     } else if (auth.status === "success") {
       setAppState("success");
     } else if (auth.status === "failed") {

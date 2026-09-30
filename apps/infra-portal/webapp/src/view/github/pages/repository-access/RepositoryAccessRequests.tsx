@@ -13,15 +13,24 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import GitHubConnect from "@component/ui/GitHubConnect";
+import DefaultRepositoryAccessSection from "@view/github/components/DefaultRepositoryAccessSection";
 
 export default function RepositoryAccessRequests() {
+  const theme = useTheme();
   return (
-    <Box sx={{ mt: 3, p: 3, border: "1px solid #ddd", borderRadius: "8px" }}>
-      <Typography variant="h6" gutterBottom>
-        Repository Access
+    <Box>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 600, mt: 3, color: theme.palette.customText.primary.p1.active }}
+      >
+        Overview
       </Typography>
+      <Typography variant="body2" sx={{ mb: 2, color: theme.palette.customText.primary.p3.active }}>
+        Organizations and repositories you granted access.
+      </Typography>
+      <DefaultRepositoryAccessSection />
       <GitHubConnect />
     </Box>
   );

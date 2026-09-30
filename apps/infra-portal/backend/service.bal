@@ -54,7 +54,11 @@ service class ErrorInterceptor {
     }
 }
 
-service http:InterceptableService / on new http:Listener(8090) {
+listener http:Listener httpListener = new (8090, {
+    timeout: 300
+});
+
+service http:InterceptableService / on httpListener {
 
     # Request interceptor.
     #
@@ -122,11 +126,42 @@ service http:InterceptableService / on new http:Listener(8090) {
             privileges.push(authorization:ADMIN_PRIVILEGE);
         }
 
-        UserInfoResponse userInfoResponse = {...loggedInUser, privileges};
+        string? githubUserId = userInfo.githubUserId;
+        string? githubUsername = ();
+        boolean githubLookupFailed = false;
+        if githubUserId is string {
+            gh:GitHubUser|error githubUser = gh:getUserDetails(githubUserId);
+            if githubUser is error {
+                // The GitHub username is supplementary, so degrade instead of failing the profile.
+                githubLookupFailed = true;
+                log:printWarn("Error while fetching GitHub username for user-info!",
+                        'error = githubUser, email = userInfo.email);
+            } else {
+                githubUsername = githubUser.login;
+            }
+        }
 
-        error? cacheError = cache.put(userInfo.email, userInfoResponse);
-        if cacheError is error {
-            log:printError("An error occurred while writing user info to the cache", cacheError);
+        UserInfoResponse userInfoResponse = {
+            employeeId: loggedInUser.employeeId,
+            workEmail: loggedInUser.workEmail,
+            firstName: loggedInUser.firstName,
+            lastName: loggedInUser.lastName,
+            jobRole: loggedInUser.jobRole,
+            employeeThumbnail: loggedInUser.employeeThumbnail,
+            department: loggedInUser.department,
+            team: loggedInUser.team,
+            employmentType: loggedInUser.employmentType,
+            privileges,
+            githubUserId,
+            githubUsername
+        };
+
+        // Avoid caching a profile with a missing GitHub username so the next call can retry.
+        if !githubLookupFailed {
+            error? cacheError = cache.put(userInfo.email, userInfoResponse);
+            if cacheError is error {
+                log:printWarn("An error occurred while writing user info to the cache", cacheError);
+            }
         }
 
         return userInfoResponse;
@@ -923,7 +958,22 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
-
+        db:Organization|error savedOrg = db:getOrganizationByName(newOrganization.organizationName);
+        if savedOrg is error {
+            log:printError("Organization saved but could not load it for team seed", savedOrg);
+            return http:CREATED;
+        }
+        gh:GitHubTeam[]|error teams = gh:getAllTeamsForOrganization(savedOrg.organizationName);
+        if teams is error {
+            log:printWarn("Could not seed repo team leads; Sync can still add them", teams);
+            return http:CREATED;
+        }
+        foreach gh:GitHubTeam team in teams {
+            error? inserted = db:seedRepoTeamLead(savedOrg.organizationId, team.name, team.slug);
+            if inserted is error {
+                log:printWarn("Failed to seed repo team lead row", inserted, teamSlug = team.slug);
+            }
+        }
         return http:CREATED;
     }
 
@@ -1479,6 +1529,179 @@ service http:InterceptableService / on new http:Listener(8090) {
         };
     }
 
+    # Get all repo team leads.
+    #
+    # + return - list of repo team leads or error
+    isolated resource function get repo\-team\-leads(http:RequestContext ctx)
+        returns db:RepoTeamLead[]|http:Forbidden|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        db:RepoTeamLead[]|error rows = db:getRepoTeamLeads();
+        if rows is error {
+            log:printError("Error occurred while retrieving repo team leads!", rows);
+            return <http:InternalServerError>{body: {message: "Error occurred while retrieving repo team leads!"}};
+        }
+        return rows;
+    }
+
+    # Sync repo team leads.
+    #
+    # + return - result of syncing repo team leads or error
+    isolated resource function post repo\-team\-leads/sync(http:RequestContext ctx)
+        returns db:RepoTeamLeadSyncResult|http:Forbidden|http:InternalServerError {
+        
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.admin], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        db:Organization[]|error organizations = db:getOrganizations();
+        if organizations is error {
+            return <http:InternalServerError>{body: {message: "Error while fetching organizations!"}};
+        }
+
+        db:RepoTeamLeadKey[]|error existingKeys = db:getRepoTeamLeadKeys();
+        if existingKeys is error {
+            return <http:InternalServerError>{body: {message: "Error while fetching existing team leads!"}};
+        }
+
+        map<boolean> existing = {};
+        foreach var key in existingKeys {
+            existing[string `${key.organizationId}|${key.teamSlug}`] = true;
+        }
+
+        map<string?> existingEmails = {};
+        foreach var key in existingKeys {
+            existingEmails[string `${key.organizationId}|${key.teamSlug}`] = key.leadEmail;
+        }
+
+        int|error deactivated = db:deactivateRepoTeamLeadsForInactiveOrgs();
+        if deactivated is error {
+            return <http:InternalServerError>{body: {message: "Error while removing stale repo team leads!"}};
+        }
+        int deletedCount = deactivated;
+
+        map<string?> githubIdEmailCache = {};
+        int addedCount = 0;
+        int updatedCount = 0;
+        foreach db:Organization org in organizations {
+            gh:GitHubTeam[]|error teams = gh:getAllTeamsForOrganization(org.organizationName);
+            if teams is error {
+                log:printError("Error fetching GitHub teams", teams, organizationName = org.organizationName);
+                continue;
+            }
+            map<boolean> fetchedSlugs = {};
+            foreach gh:GitHubTeam team in teams {
+                fetchedSlugs[team.slug] = true;
+                string mapKey = string `${org.organizationId}|${team.slug}`;
+                boolean isNew = !existing.hasKey(mapKey);
+                string? currentEmail = existingEmails[mapKey];
+                boolean needsLead = isNew
+                    || currentEmail is ()
+                    || currentEmail == ""
+                    || currentEmail == gh:DEFAULT_REPO_TEAM_LEAD_EMAIL;
+                if !needsLead {
+                    continue;
+                }
+
+                string? resolvedEmail = ();
+                gh:TeamMember[]|error maintainers = gh:getTeamMaintainers(org.organizationName, team.slug);
+                if maintainers is error {
+                    log:printWarn("Error fetching team maintainers", maintainers,
+                        organizationName = org.organizationName, teamSlug = team.slug);
+                } else {
+                    foreach gh:TeamMember maintainer in maintainers {
+                            string idKey = maintainer.id.toString();
+                            if githubIdEmailCache.hasKey(idKey) {
+                                resolvedEmail = githubIdEmailCache[idKey];
+                            } else {
+                                string?|error mapped = scim:searchWorkEmailByGithubUserId(idKey);
+                                if mapped is error {
+                                    log:printWarn("Asgardeo GitHub user id lookup failed", mapped,
+                                        githubUserId = idKey, githubLogin = maintainer.login);
+                                    githubIdEmailCache[idKey] = ();
+                                } else {
+                                    githubIdEmailCache[idKey] = mapped;
+                                    resolvedEmail = mapped;
+                                }
+                            }
+                        if resolvedEmail is string {
+                            break;
+                        }
+                    }
+                }
+
+                string leadEmail = resolvedEmail is string
+                    ? resolvedEmail
+                    : gh:DEFAULT_REPO_TEAM_LEAD_EMAIL;
+
+                if isNew {
+                    error? inserted = db:insertRepoTeamLead(org.organizationId, team.name, team.slug, leadEmail);
+                    if inserted is error {
+                        return <http:InternalServerError>{body: {message: "Error while inserting repo team lead!"}};
+                    }
+                    addedCount += 1;
+                } else {
+                    int|error filled = db:fillRepoTeamLeadEmail(
+                        org.organizationId, team.slug, currentEmail, leadEmail
+                    );
+                    if filled is error {
+                        return <http:InternalServerError>{body: {message: "Error while updating repo team lead!"}};
+                    }
+                    updatedCount += filled;
+                }
+            }
+            foreach var key in existingKeys {
+                if key.organizationId != org.organizationId {
+                    continue;
+                }
+                if fetchedSlugs.hasKey(key.teamSlug) {
+                    continue;
+                }
+                int|error removed = db:deactivateRepoTeamLead(key.organizationId, key.teamSlug);
+                if removed is error {
+                    return <http:InternalServerError>{body: {message: "Error while removing stale repo team leads!"}};
+                }
+                deletedCount += removed;
+            }
+        }
+        return {addedCount, deletedCount, updatedCount};
+    }
+
+    # Update a repo team lead email.
+    #
+    # + id - ID of the repo team lead
+    # + payload - updated repo team lead email
+    # + return - http:Ok or error
+    isolated resource function put repo\-team\-leads/[int id](http:RequestContext ctx, RepoTeamLeadUpdate payload)
+        returns http:Ok|http:Forbidden|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.admin], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        error? result = db:updateRepoTeamLeadEmail(id, payload.leadEmail);
+        if result is error {
+            log:printError("Error while updating repo team lead!", result);
+            return <http:InternalServerError>{body: {message: "Error while updating repo team lead!"}};
+        }
+        return http:OK;
+    }
+
     # Get all default teams.
     #
     # + return - list of default teams or error
@@ -1761,6 +1984,161 @@ service http:InterceptableService / on new http:Listener(8090) {
         return teams;
     }
 
+        
+    # Get GitHub repositories of the organization.
+    #
+    # + id - Organization ID
+    # + return - List of GitHub repositories or error
+    isolated resource function get
+        organizations/[int id]/github\-repos(http:RequestContext ctx)
+            returns gh:OrgRepository[]|http:Forbidden|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        db:Organization|error organization = db:getOrganizationById(id);
+        if organization is error {
+            log:printError("Error while fetching organization: ", organization, organizationId = id);
+            return <http:InternalServerError>{body: {message: "Error while fetching organization: "}};
+        }
+
+        gh:OrgRepository[]|error repos = gh:getOrganizationRepositories(organization.organizationName);
+        if repos is error {
+            log:printError("Error while fetching repositories for organization: ", repos,
+                organizationName = organization.organizationName);
+            return <http:InternalServerError>{body: {message: "Error while fetching repositories for organization: "}};
+        }
+        return repos;
+    }
+
+    # Get default repository access status and org/repo list for the current user.
+    #
+    # + return - status + organizations/repos, or error
+    isolated resource function get default\-repository\-access(http:RequestContext ctx)
+        returns DefaultRepositoryAccessResponse|http:Forbidden|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {message: "User information header not found!"}
+            };
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {message: "Insufficient privileges!"}
+            };
+        }
+
+        entity:Employee|error? employee = entity:fetchEmployeesBasicInfo(userInfo.email);
+        if employee is error {
+            string customError = "Error while fetching employee information!";
+            log:printError(customError, employee, email = userInfo.email);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        if employee is () {
+            string customError = "Employee information not found for the employee!";
+            log:printError(customError, email = userInfo.email);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+
+        db:UserDefaultRepositoryAccess|error? result =
+            db:getUserDefaultRepositoryAccess(employee.employeeId);
+        if result is error {
+            string customError = "Error while reading default repository access!";
+            log:printError(customError, result, employeeId = employee.employeeId);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        if result is () {
+            return {status: "not_granted", organizations: []};
+        }
+        if result.status != "granted" {
+            return {status: result.status, organizations: []};
+        }
+
+        gh:OrganizationAndTeam[] orgTeams = [];
+        if employee.employmentType == PERMANENT {
+            db:OrganizationDefaultRepository[]|error orgRepos =
+                db:getOrganizationDefaultRepositoriesByAccessType("PERMANENT");
+            if orgRepos is error {
+                string customError = "Error while reading default organization repositories!";
+                log:printError(customError, orgRepos);
+                return <http:InternalServerError>{body: {message: customError}};
+            }
+            orgTeams = from var row in orgRepos
+                select {orgName: row.orgName, teamSlug: row.teamSlug};
+
+            if employee.department == CUSTOMER_SUCCESS_DEPARTMENT {
+                db:OrganizationDefaultRepository[]|error csRepos =
+                    db:getOrganizationDefaultRepositoriesByAccessType("CS");
+                if csRepos is error {
+                    string customError = "Error while reading default organization repositories!";
+                    log:printError(customError, csRepos);
+                    return <http:InternalServerError>{body: {message: customError}};
+                }
+                foreach db:OrganizationDefaultRepository row in csRepos {
+                    orgTeams.push({orgName: row.orgName, teamSlug: row.teamSlug});
+                }
+            }
+        } else if employee.employmentType == INTERNSHIP {
+            db:OrganizationDefaultRepository[]|error orgRepos =
+                db:getOrganizationDefaultRepositoriesByAccessType("INTERN");
+            if orgRepos is error {
+                string customError = "Error while reading default organization repositories!";
+                log:printError(customError, orgRepos);
+                return <http:InternalServerError>{body: {message: customError}};
+            }
+            orgTeams = from var row in orgRepos
+                select {orgName: row.orgName, teamSlug: row.teamSlug};
+        } else {
+            return {status: "granted", organizations: []};
+        }
+
+        map<DefaultAccessRepository[]> reposByOrg = {};
+        foreach gh:OrganizationAndTeam ot in orgTeams {
+            gh:TeamRepository[]|error teamRepos = gh:getTeamRepositories(ot.orgName, ot.teamSlug);
+            if teamRepos is error {
+                log:printWarn(
+                    "Failed to list team repos; skipping team",
+                    teamRepos,
+                    org = ot.orgName,
+                    team = ot.teamSlug
+                );
+                continue;
+            }
+            if !reposByOrg.hasKey(ot.orgName) {
+                reposByOrg[ot.orgName] = [];
+            }
+            DefaultAccessRepository[] existing = reposByOrg.get(ot.orgName);
+            map<boolean> seen = {};
+            foreach DefaultAccessRepository r in existing {
+                seen[r.name] = true;
+            }
+            foreach gh:TeamRepository repo in teamRepos {
+                if seen.hasKey(repo.name) {
+                    continue;
+                }
+                seen[repo.name] = true;
+                existing.push({name: repo.name, htmlUrl: repo.url});
+            }
+            reposByOrg[ot.orgName] = existing;
+        }
+
+        DefaultAccessOrganization[] organizations = [];
+        foreach string orgName in reposByOrg.keys() {
+            organizations.push({
+                orgName: orgName,
+                avatarUrl: string `https://github.com/${orgName}.png`,
+                repositories: reposByOrg.get(orgName)
+            });
+        }
+        return {status: "granted", organizations};
+    
+    }
     # Set default repository access for a GitHub user based on their employment type and department.
     #
     # + return - List of successful responses and failed responses or error
@@ -1803,82 +2181,405 @@ service http:InterceptableService / on new http:Listener(8090) {
             };
         }
 
-        string? gitHubUserId = userInfo.githubUserId;
-        if gitHubUserId is () {
+        string? githubUserId = userInfo.githubUserId;
+        if githubUserId is () {
             return <http:Forbidden>{
                 body: {message: "GitHub account is not verified."}
             };
         }
 
-        gh:AddOrUpdateTeamMemberResponse|error result
-            = error("No team membership changes made as the employment type does not match any criteria.");
-
-        gh:GitHubUser|error gitHubUser = gh:getUserDetails(gitHubUserId);
-        if gitHubUser is error {
-            string customError = "Error while fetching GitHub user details!";
-            log:printError(customError, gitHubUser);
+        gh:GitHubUser|error githubUser = gh:getUserDetails(githubUserId);
+        if githubUser is error {
+            string customError = "Error while resolving GitHub username!";
+            log:printError(customError, githubUser, email = userInfo.email);
             return <http:InternalServerError>{
                 body: {
                     message: customError
                 }
             };
         }
+        string gitHubUserName = githubUser.login;
 
-        string gitHubUserName = gitHubUser.login;
-        if employee.employmentType is PERMANENT {
-            gh:AddOrUpdateTeamMemberInformationInput[] inputs
-                = from gh:OrganizationAndTeam organizationAndTeam in gh:PERMANENT_DEFAULT_TEAM_ACCESS
-                select {
-                    orgName: organizationAndTeam.orgName,
-                    teamSlug: organizationAndTeam.teamSlug,
-                    userName: gitHubUserName,
-                    role: gh:MEMBER
-                };
-
-            if employee.department is CUSTOMER_SUCCESS_DEPARTMENT {
-                gh:AddOrUpdateTeamMemberInformationInput[] customerSuccessInputs
-                    = from gh:OrganizationAndTeam organizationAndTeam in gh:CS_TEAM_ACCESS
-                    select {
-                        orgName: organizationAndTeam.orgName,
-                        teamSlug: organizationAndTeam.teamSlug,
-                        userName: gitHubUserName,
-                        role: gh:MEMBER
-                    };
-
-                inputs.push(...customerSuccessInputs);
+        gh:OrganizationAndTeam[] orgTeams = [];
+        if employee.employmentType == PERMANENT {
+            db:OrganizationDefaultRepository[]|error orgRepos =
+                db:getOrganizationDefaultRepositoriesByAccessType("PERMANENT");
+            if orgRepos is error {
+                string customError = "Error while reading default organization repositories!";
+                log:printError(customError, orgRepos);
+                return <http:InternalServerError>{body: {message: customError}};
             }
-            result = gh:addOrUpdateTeamMemberships(inputs);
-        }
-        if employee.employmentType is INTERNSHIP {
-            gh:AddOrUpdateTeamMemberInformationInput[] inputs
-                = from string organization in gh:INTERNS_DEFAULT_ORGANIZATIONS
-                select {
-                    orgName: organization,
-                    teamSlug: WSO2_ALL_INTERNS_TEAM_SLUG,
-                    userName: gitHubUserName,
-                    role: gh:MEMBER
-                };
+            orgTeams = from var row in orgRepos
+                select {orgName: row.orgName, teamSlug: row.teamSlug};
 
-            result = gh:addOrUpdateTeamMemberships(inputs);
-        }
-
-        if result is error {
-            string customError = "Error while adding/updating team membership for the employee!";
-            log:printError(customError, result);
+            if employee.department == CUSTOMER_SUCCESS_DEPARTMENT {
+                db:OrganizationDefaultRepository[]|error csRepos =
+                    db:getOrganizationDefaultRepositoriesByAccessType("CS");
+                if csRepos is error {
+                    string customError = "Error while reading default organization repositories!";
+                    log:printError(customError, csRepos);
+                    return <http:InternalServerError>{body: {message: customError}};
+                }
+                foreach db:OrganizationDefaultRepository row in csRepos {
+                    orgTeams.push({orgName: row.orgName, teamSlug: row.teamSlug});
+                }
+            }
+        } else if employee.employmentType == INTERNSHIP {
+            db:OrganizationDefaultRepository[]|error orgRepos =
+                db:getOrganizationDefaultRepositoriesByAccessType("INTERN");
+            if orgRepos is error {
+                string customError = "Error while reading default organization repositories!";
+                log:printError(customError, orgRepos);
+                return <http:InternalServerError>{body: {message: customError}};
+            }
+            orgTeams = from var row in orgRepos
+                select {orgName: row.orgName, teamSlug: row.teamSlug};
+        } else {
+            string actualType = employee.employmentType ?: "null";
+            string customError = string `No team membership changes made as the employment type does not match any criteria. employmentType=${actualType}`;
+            log:printError(customError, email = userInfo.email, employmentType = actualType);
             return <http:InternalServerError>{
                 body: {
                     message: customError
                 }
             };
         }
-        return result;
+
+        if orgTeams.length() == 0 {
+            string customError = "No default organization repositories configured for this employment type!";
+            log:printError(customError, email = userInfo.email, employmentType = employee.employmentType);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+
+        gh:AddOrUpdateTeamMemberInformationInput[] inputs = from var organizationAndTeam in orgTeams
+            select {
+                orgName: organizationAndTeam.orgName,
+                teamSlug: organizationAndTeam.teamSlug,
+                userName: gitHubUserName,
+                role: gh:MEMBER
+            };
+
+        error? grantingResult = db:upsertUserDefaultRepositoryAccess(employee.employeeId, "granting");
+        if grantingResult is error {
+            string customError = "Error while updating default repository access status!";
+            log:printError(customError, grantingResult, employeeId = employee.employeeId);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+
+        gh:AddOrUpdateTeamMemberResponse|error membershipResult = gh:addOrUpdateTeamMemberships(inputs);
+        if membershipResult is error {
+            error? resetResult = db:upsertUserDefaultRepositoryAccess(employee.employeeId, "not_granted");
+            if resetResult is error {
+                log:printError("Failed to reset default access status after GitHub error", resetResult,
+                    employeeId = employee.employeeId);
+            }
+            string customError = "Error while adding/updating team membership for the employee!";
+            log:printError(customError, membershipResult);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+
+        string status = membershipResult.failedMemberships.length() == 0 &&
+            membershipResult.successfulMemberships.length() > 0 ? "granted" : "not_granted";
+        error? dbResult = db:upsertUserDefaultRepositoryAccess(employee.employeeId, status);
+        
+        if dbResult is error {
+            string customError = "Default access applied on GitHub, but failed to update access record in DB!";
+            log:printError(customError, dbResult, employeeId = employee.employeeId);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+
+        return membershipResult;
+    }
+
+    # List access requests: own requests, or those assigned to a lead.
+    #
+    # + leadEmail - If set, return requests assigned to this lead; otherwise the caller's own requests
+    # + return - Access requests, or Forbidden / InternalServerError
+    isolated resource function get repository\-access\-requests(http:RequestContext ctx, string? leadEmail)
+        returns db:AccessRequest[]|http:Forbidden|http:InternalServerError {
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        db:AccessRequest[]|error requests;
+        if leadEmail is string {
+            boolean isAdmin = authorization:checkPermissions(
+                [authorization:authorizedRoles.admin], userInfo.groups);
+            if leadEmail != userInfo.email && !isAdmin {
+                return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+            }
+            requests = db:getAccessRequestsByLeadEmail(leadEmail);
+        } else {
+            requests = db:getAccessRequestsByEmail(userInfo.email);
+        }
+        if requests is error {
+            log:printError("Error while retrieving access requests!", requests);
+            return <http:InternalServerError>{body: {message: "Error occurred while retrieving access requests!"}};
+        }
+        return requests;
+    }
+
+    # Approve an access request.
+    #
+    # + id - Access request id
+    # + return - OK or Forbidden / BadRequest / NotFound / InternalServerError
+    resource function patch repository\-access\-requests/[int id]/approve(http:RequestContext ctx)
+        returns http:Ok|http:Forbidden|http:BadRequest|http:NotFound|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+
+        if !authorization:checkPermissions(
+                [authorization:authorizedRoles.approver, authorization:authorizedRoles.admin], userInfo.groups) {            
+                    return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+                }
+
+        db:AccessRequest|error? request = db:getAccessRequest(id);
+        if request is error { return <http:InternalServerError>{body: {message: "Error retrieving access request!"}}; }
+        if request is () { return <http:NotFound>{body: {message: "Access request not found!"}}; }
+        if request.state != db:PENDING {
+            return <http:BadRequest>{body: {message: "Access request is not Pending!"}};
+        }
+
+        boolean isAdmin = authorization:checkPermissions([authorization:authorizedRoles.admin], userInfo.groups);
+        if request.leadEmail != userInfo.email && !isAdmin {
+            return <http:Forbidden>{body: {message: "Only the assigned lead can approve this request!"}};
+        }
+
+        error? dbResult = db:approveAccessRequest(id, userInfo.email);
+        if dbResult is error {
+            return <http:BadRequest>{body: {message: "Access request is not Pending!"}};
+        }
+
+        error? ghResult = gh:addRepositoryCollaborator(
+            request.orgName, request.repoName, request.githubUsername, request.permission);
+        if ghResult is error {
+            log:printError("Failed to add GitHub collaborator!", ghResult);
+            error? reverted = db:revertAccessRequestToPending(id);
+            if reverted is error {
+                log:printError("Failed to revert access request after GitHub error!", reverted);
+            }
+            return <http:InternalServerError>{body: {message: "Failed to grant GitHub access!"}};
+        }
+        return http:OK;
+    }
+
+    # Reject an access request.
+    #
+    # + id - Access request id
+    # + payload - Reject request payload
+    # + return - OK or Forbidden / BadRequest / NotFound / InternalServerError
+    resource function patch repository\-access\-requests/[int id]/reject(http:RequestContext ctx, record {| string comment; |} payload)
+        returns http:Ok|http:Forbidden|http:BadRequest|http:NotFound|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+
+        if !authorization:checkPermissions(
+                [authorization:authorizedRoles.approver, authorization:authorizedRoles.admin], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        db:AccessRequest|error? request = db:getAccessRequest(id);
+        if request is error {
+            return <http:InternalServerError>{body: {message: "Error retrieving access request!"}};
+        }
+        if request is () {
+            return <http:NotFound>{body: {message: "Access request not found!"}};
+        }
+        if request.state != db:PENDING {
+            return <http:BadRequest>{body: {message: "Access request is not Pending!"}};
+        }
+
+        boolean isAdmin = authorization:checkPermissions(
+            [authorization:authorizedRoles.admin], userInfo.groups);
+        if request.leadEmail != userInfo.email && !isAdmin {
+            return <http:Forbidden>{body: {message: "Only the assigned lead can reject this request!"}};
+        }
+
+        error? dbResult = db:rejectAccessRequest(id, userInfo.email, payload.comment);
+        if dbResult is error {
+            return <http:InternalServerError>{body: {message: "Failed to reject access request!"}};
+        }
+        return http:OK;
+    }
+
+    # Get one access request by id.
+    #
+    # + id - Access request id
+    # + return - Access request, or Forbidden / NotFound / InternalServerError
+    isolated resource function get repository\-access\-requests/[int id](http:RequestContext ctx)
+        returns db:AccessRequest|http:Forbidden|http:NotFound|http:InternalServerError {
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        db:AccessRequest|error? request = db:getAccessRequest(id);
+        if request is error {
+            log:printError("Error while retrieving access request!", request);
+            return <http:InternalServerError>{body: {message: "Error occurred while retrieving the access request!"}};
+        }
+        if request is () {
+            return <http:NotFound>{body: {message: string `No access request found with ID: ${id}`}};
+        }
+        boolean isAdmin = authorization:checkPermissions(
+            [authorization:authorizedRoles.admin], userInfo.groups);
+        if request.email != userInfo.email && request.leadEmail != userInfo.email && !isAdmin {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+        return request;
+    }
+
+    # Create a Pending access request for an existing repository.
+    #
+    # + payload - Access request details
+    # + return - Created request, or Forbidden / BadRequest / InternalServerError
+    resource function post repository\-access\-requests(http:RequestContext ctx, AccessRequestPayload payload)
+        returns http:Created|http:Forbidden|http:BadRequest|http:InternalServerError {
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{body: {message: "User information header not found!"}};
+        }
+        if !authorization:checkPermissions([authorization:authorizedRoles.employee], userInfo.groups) {
+            return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
+        }
+
+        if payload.permission != "pull" && payload.permission != "triage" && payload.permission != "push" {
+            return <http:BadRequest>{body: {message: "permission must be pull, triage, or push"}};
+        }
+
+        string? githubUserId = userInfo.githubUserId;
+        if githubUserId is () {
+            return <http:BadRequest>{body: {message: "GitHub account is not verified."}};
+        }
+        gh:GitHubUser|error githubUser = gh:getUserDetails(githubUserId);
+        if githubUser is error {
+            log:printError("Error while resolving GitHub username!", githubUser);
+            return <http:InternalServerError>{body: {message: "Error while resolving GitHub username!"}};
+        }
+
+        entity:Employee|error? employee = entity:fetchEmployeesBasicInfo(userInfo.email);
+        if employee is error {
+            log:printError("Error while fetching employee information!", employee);
+            return <http:InternalServerError>{body: {message: "Error while fetching employee information!"}};
+        }
+        if employee is () {
+            return <http:InternalServerError>{body: {message: "Employee information not found!"}};
+        }
+
+        db:UserDefaultRepositoryAccess|error? defaultAccess =
+            db:getUserDefaultRepositoryAccess(employee.employeeId);
+        if defaultAccess is error {
+            log:printError("Error while reading default repository access!", defaultAccess);
+            return <http:InternalServerError>{body: {message: "Error while reading default repository access!"}};
+        }
+        if defaultAccess is () || defaultAccess.status != "granted" {
+            return <http:BadRequest>{
+                body: {message: "Default repository access must be granted before requesting repo access."}
+            };
+        }
+
+        db:AccessRequest|error? pending = db:getPendingAccessRequest(
+            userInfo.email, payload.orgName, payload.repoName);
+        if pending is error {
+            log:printError("Error while checking pending access request!", pending);
+            return <http:InternalServerError>{body: {message: "Error while checking pending access request!"}};
+        }
+        if pending is db:AccessRequest {
+            return <http:BadRequest>{
+                body: {message: "A pending access request already exists for this repository."}
+            };
+        }
+
+        db:Organization|error organization = db:getOrganizationById(payload.organizationId);
+        if organization is error {
+            log:printError("Error while fetching organization!", organization);
+            return <http:InternalServerError>{body: {message: "Error while fetching organization!"}};
+        }
+        if organization.organizationName.toLowerAscii() != payload.orgName.toLowerAscii() {
+            return <http:BadRequest>{body: {message: "Organization does not match the repository."}};
+        }
+
+        db:RepoTeamLead[]|error leads = db:getRepoTeamLeads();
+        if leads is error {
+            log:printError("Error while validating repo team lead!", leads);
+            return <http:InternalServerError>{body: {message: "Error while validating repo team lead!"}};
+        }
+
+        string? verifiedLeadEmail = ();
+        foreach db:RepoTeamLead lead in leads {
+            if lead.organizationId != payload.organizationId {
+                continue;
+            }
+            string? candidate = lead.leadEmail;
+            if candidate is () || candidate.toLowerAscii() != payload.leadEmail.toLowerAscii() {
+                continue;
+            }
+            gh:TeamRepository[]|error teamRepos = gh:getTeamRepositories(
+                organization.organizationName, lead.teamSlug);
+            if teamRepos is error {
+                log:printError("Error while listing team repositories!", teamRepos);
+                return <http:InternalServerError>{body: {message: "Error while validating repository ownership!"}};
+            }
+            foreach gh:TeamRepository repo in teamRepos {
+                if repo.name.toLowerAscii() == payload.repoName.toLowerAscii() {
+                    verifiedLeadEmail = candidate;
+                    break;
+                }
+            }
+            if verifiedLeadEmail is string {
+                break;
+            }
+        }
+        if verifiedLeadEmail is () {
+            return <http:BadRequest>{
+                body: {message: "leadEmail is not the lead of a team that has this repository."}
+            };
+        }
+        db:AccessRequestCreate createPayload = {
+            email: userInfo.email,
+            githubUsername: githubUser.login,
+            leadEmail: verifiedLeadEmail,
+            ccList: payload.ccList,
+            organizationId: payload.organizationId,
+            orgName: payload.orgName,
+            repoName: payload.repoName,
+            permission: payload.permission,
+            justification: payload.justification
+        };
+
+        db:AccessRequest|error inserted = db:insertAccessRequest(createPayload);
+        if inserted is error {
+            log:printError("Error while creating access request!", inserted);
+            return <http:InternalServerError>{
+                body: {message: string `Error occurred while creating access request for ${payload.repoName}!`}
+            };
+        }
+
+        return <http:Created>{body: inserted};
     }
 
     # Exchange the authorization code for an access token.
     #
     # + payload - The authorization code received from GitHub after user authorization
     # + return - Access token or error
-    isolated resource function post github/verify\-email(http:RequestContext ctx, VerifyEmailPayload payload)
+    isolated resource function post github/verify\-and\-persist\-user(http:RequestContext ctx, VerifyEmailPayload payload)
         returns gh:EmailVerificationResponse|http:Forbidden|http:InternalServerError {
 
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
@@ -1896,6 +2597,7 @@ service http:InterceptableService / on new http:Listener(8090) {
                 }
             };
         }
+
         gh:EmailVerificationResponse|error result
             = gh:verifyCompanyEmail({code: payload.code, email: userInfo.email});
 
@@ -1915,15 +2617,14 @@ service http:InterceptableService / on new http:Listener(8090) {
                     = scim:updateGithubUserId(githubUserId = githubUserId, email = userInfo.email);
 
             if updatedUser is error {
-                string customError = "Error while updating GitHub user ID for the user!";
-                log:printError(customError, updatedUser);
+                string customError = "Error while updating GitHub user ID in the IDP!";
+                log:printError(customError, updatedUser, email = userInfo.email);
                 return <http:InternalServerError>{
                     body: {
                         message: customError
                     }
                 };
-            }
-            if updatedUser is () {
+            } else if updatedUser is () {
                 string customError = "User not found for the email!";
                 log:printError(customError, email = userInfo.email);
                 return <http:InternalServerError>{
@@ -1931,6 +2632,14 @@ service http:InterceptableService / on new http:Listener(8090) {
                         message: customError
                     }
                 };
+            }
+
+            // Invalidate the cached user info so the next fetch reflects the newly linked GitHub account.
+            cache:Error? cacheInvalidateError = cache.invalidate(userInfo.email);
+            if cacheInvalidateError is cache:Error {
+                log:printWarn(
+                        "An error occurred while invalidating cached user info", cacheInvalidateError,
+                        email = userInfo.email);
             }
         }
         return result;
