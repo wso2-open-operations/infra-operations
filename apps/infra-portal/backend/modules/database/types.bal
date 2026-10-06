@@ -18,6 +18,16 @@ import ballerina/sql;
 import ballerinax/mysql;
 import infra_portal.types;
 
+# Database connection pool settings exposed as configurables.
+type ConnectionPoolConfig record {|
+    # Maximum number of open connections
+    int maxOpenConnections;
+    # Minimum number of idle connections
+    int minIdleConnections;
+    # Maximum lifetime of a connection, in seconds
+    decimal maxConnectionLifeTime;
+|};
+
 # [Configurable] database configs.
 type DatabaseConfig record {|
     # Database User 
@@ -31,16 +41,26 @@ type DatabaseConfig record {|
     # Database port
     int port;
     # Database connection pool
-    sql:ConnectionPool connectionPool;
+    ConnectionPoolConfig connectionPool;
 |};
 
 # Database config record.
 type DatabaseClientConfig record {|
-    *DatabaseConfig;
+    # Database User
+    string user;
+    # Database Password
+    string password;
+    # Database Name
+    string database;
+    # Database Host
+    string host;
+    # Database port
+    int port;
+    # Database connection pool
+    sql:ConnectionPool connectionPool;
     # Additional configurations related to the MySQL database connection
     mysql:Options? options;
 |};
-
 # RepositoryRequest record type.
 public type RepositoryRequest record {|
     # Repository Request ID
