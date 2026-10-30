@@ -29,6 +29,9 @@ public const decimal RETRY_MAX_INTERVAL = 20.0;
 # Default limit for the entity.
 public const int DEFAULT_LIMIT = 100;
 
+# Default lead email assigned on the first repo-team-leads sync.
+public const string DEFAULT_REPO_TEAM_LEAD_EMAIL = "maheshika@wso2.com";
+
 # GitHub user details are cached for 6 hours. The username rarely changes.
 public const decimal GITHUB_USER_CACHE_MAX_AGE = 21600.0;
 

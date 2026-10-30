@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 import { Role } from "@root/src/slices/authSlice/auth";
+import { fetchDefaultRepositoryAccess } from "@root/src/slices/githubOauthAppSlice/githubOauth";
 import { fetchRepositoryRequests } from "@root/src/slices/repositoryRequestSlice/repositoryRequest";
 import { RootState, useAppDispatch, useAppSelector } from "@root/src/slices/store";
 
@@ -43,9 +44,11 @@ export default function Home() {
   const auth = useAppSelector((state: RootState) => state.auth);
   const user = useAppSelector((state: RootState) => state.user);
   const repositoryRequestState = useAppSelector((state: RootState) => state.repositoryRequest);
+  const defaultAccessStatus = useAppSelector((state: RootState) => state.githubConnect.defaultAccessStatus);
 
   useEffect(() => {
     dispatch(fetchRepositoryRequests({ leadEmail: user.userInfo?.workEmail }));
+    dispatch(fetchDefaultRepositoryAccess());
   }, [dispatch, user.userInfo?.workEmail]);
 
   const roles = auth.roles;
@@ -84,12 +87,23 @@ export default function Home() {
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
     {
+      icon: <GitPullRequest size={16} />,
+      iconBg: blueBg,
+      iconColor: blueColor,
+      label: "Request existing repo",
+      subtitle: "Ask a lead for repository access",
+      onClick: () => navigate("/github/request-existing-repo-access"),
+      show:
+        (roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN)) &&
+        defaultAccessStatus === "granted",
+    },
+    {
       icon: <ClipboardList size={16} />,
       iconBg: greenBg,
       iconColor: greenColor,
       label: "View my requests",
       subtitle: "Track status and history",
-      onClick: () => navigate("/github/repository-requests"),
+      onClick: () => navigate("/github/my-requests"),
       show: roles.includes(Role.EMPLOYEE) || roles.includes(Role.ADMIN),
     },
     {

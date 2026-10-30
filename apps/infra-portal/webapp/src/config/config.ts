@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 import { BaseURLAuthClientConfig } from "@asgardeo/auth-react";
+
 import { GITHUB_OAUTH_SCOPES } from "./constant";
 
 declare global {
@@ -77,12 +78,18 @@ export const AppConfig = {
     teams: ServiceBaseUrl + "/teams",
     topics: ServiceBaseUrl + "/topics",
     leads: ServiceBaseUrl + "/leads",
+    repoTeamLeads: ServiceBaseUrl + "/repo-team-leads",
+    syncRepoTeamLeads: ServiceBaseUrl + "/repo-team-leads/sync",
     organizations: ServiceBaseUrl + "/organizations",
     comments: (requestId: number) => `${ServiceBaseUrl}/repository-requests/${requestId}/comments`,
+    githubOrgRepos: (organizationId: number) => `${ServiceBaseUrl}/organizations/${organizationId}/github-repos`,
     defaultTeams: ServiceBaseUrl + "/default-teams",
+
     githubVerifyAndPersistUser: ServiceBaseUrl + "/github/verify-and-persist-user",
     setDefaultRepositoryAccess: ServiceBaseUrl + "/set-default-repository-access",
     defaultRepositoryAccess: ServiceBaseUrl + "/default-repository-access",
+    repositoryAccessRequests: ServiceBaseUrl + "/repository-access-requests",
+
     securityDashboardLinks: ServiceBaseUrl + "/security-dashboard-links",
   },
   markdownUrls: {

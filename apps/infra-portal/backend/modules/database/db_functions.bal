@@ -435,3 +435,186 @@ public isolated function getOrganizationDefaultRepositories(types:EmploymentType
     return from OrganizationDefaultRepository row in resultStream
         select row;
 }
+
+# Get a specific organization by name.
+#
+# + organizationName - Organization name
+# + return - Organization or error
+public isolated function getOrganizationByName(string organizationName) returns Organization|error {
+    return databaseClient->queryRow(getOrganizationByNameQuery(organizationName));
+}
+
+# Get an access request by id.
+#
+# + id - Access request id
+# + return - Row, () if missing, or error
+public isolated function getAccessRequest(int id) returns AccessRequest|error? {
+    AccessRequest|error row = databaseClient->queryRow(getAccessRequestQuery(id));
+    if row is sql:NoRowsError {
+        return ();
+    }
+    return row;
+}
+
+# List access requests for a requester email.
+#
+# + email - Requester email
+# + return - Rows or error
+public isolated function getAccessRequestsByEmail(string email) returns AccessRequest[]|error {
+    stream<AccessRequest, error?> resultStream = databaseClient->query(getAccessRequestsByEmailQuery(email));
+    return from AccessRequest row in resultStream
+        select row;
+}
+
+# Get access requests by lead email.
+#
+# + leadEmail - Lead email
+# + return - Rows or error
+public isolated function getAccessRequestsByLeadEmail(string leadEmail) returns AccessRequest[]|error {
+    stream<AccessRequest, error?> resultStream = databaseClient->query(getAccessRequestsByLeadEmailQuery(leadEmail));
+    return from AccessRequest row in resultStream
+        select row;
+}
+
+# Get the Pending access request for the same email, org, and repo, if any.
+#
+# + email - Requester email
+# + orgName - GitHub org login
+# + repoName - Repository name
+# + return - Row, () if none pending, or error
+public isolated function getPendingAccessRequest(string email, string orgName, string repoName)
+    returns AccessRequest|error? {
+    AccessRequest|error row =
+        databaseClient->queryRow(getPendingAccessRequestQuery(email, orgName, repoName));
+    if row is sql:NoRowsError {
+        return ();
+    }
+    return row;
+}
+
+# Insert a new access request and return the inserted row.
+#
+# + payload - Create payload
+# + return - Inserted row or error
+public isolated function insertAccessRequest(AccessRequestCreate payload) returns AccessRequest|error {
+    sql:ExecutionResult result = check databaseClient->execute(insertAccessRequestQuery(payload));
+    int|string? lastInsertId = result.lastInsertId;
+    if lastInsertId is string? {
+        return error("Failed to retrieve last insert ID");
+    }
+    return check databaseClient->queryRow(getAccessRequestQuery(lastInsertId));
+}
+
+# Get all repo team lead keys.
+#
+# + return - Rows or error
+public isolated function getRepoTeamLeadKeys() returns RepoTeamLeadKey[]|error {
+    stream<RepoTeamLeadKey, error?> resultStream = databaseClient->query(getRepoTeamLeadKeysQuery());
+    return from RepoTeamLeadKey row in resultStream
+        select row;
+}
+
+# Insert a new repo team lead.
+#
+# + organizationId - Organization id
+# + teamName - Team name
+# + teamSlug - Team slug
+# + leadEmail - Lead email
+# + return - Error or null if successful
+public isolated function insertRepoTeamLead(
+    int organizationId,
+    string teamName,
+    string teamSlug,
+    string? leadEmail
+) returns error? {
+    _ = check databaseClient->execute(
+        insertRepoTeamLeadQuery(organizationId, teamName, teamSlug, leadEmail)
+    );
+}
+
+# Seed a repo team lead.
+#
+# + organizationId - Organization id
+# + teamName - Team name
+# + teamSlug - Team slug
+# + return - Error or null if successful
+public isolated function seedRepoTeamLead(
+    int organizationId,
+    string teamName,
+    string teamSlug
+) returns error? {
+    _ = check databaseClient->execute(
+        seedRepoTeamLeadQuery(organizationId, teamName, teamSlug)
+    );
+}
+
+# Fill lead_email only when it still matches the email observed at sync start.
+#
+# + organizationId - Organization id
+# + teamSlug - Team slug
+# + currentLeadEmail - Lead email read before resolution
+# + leadEmail - Lead email to set
+# + return - Number of updated rows or error
+public isolated function fillRepoTeamLeadEmail(
+    int organizationId,
+    string teamSlug,
+    string? currentLeadEmail,
+    string? leadEmail
+) returns int|error {
+    sql:ExecutionResult result = check databaseClient->execute(
+        fillRepoTeamLeadEmailQuery(organizationId, teamSlug, currentLeadEmail, leadEmail)
+    );
+    return result.affectedRowCount ?: 0;
+}
+
+# Get all repo team leads.
+#
+# + return - Rows or error
+public isolated function getRepoTeamLeads() returns RepoTeamLead[]|error {
+    stream<RepoTeamLead, error?> resultStream = databaseClient->query(getRepoTeamLeadsQuery());
+    return from RepoTeamLead row in resultStream
+        select row;
+}
+
+# Update a repo team lead email.
+#
+# + id - ID of the repo team lead
+# + leadEmail - New email for the repo team lead
+# + return - Error or null if successful
+public isolated function updateRepoTeamLeadEmail(int id, string leadEmail) returns error? {
+    _ = check databaseClient->execute(updateRepoTeamLeadEmailQuery(id, leadEmail));
+}
+
+# Approve an access request.
+#
+# + id - Access request id
+# + reviewerEmail - Email of the reviewer
+# + return - Error or null if successful
+public isolated function approveAccessRequest(int id, string reviewerEmail) returns error? {
+    sql:ExecutionResult result = check databaseClient->execute(approveAccessRequestQuery(id, reviewerEmail));
+    if result.affectedRowCount == 0 {
+        return error("Access request is not Pending or was not found");
+    }
+}
+
+# Revert an access request to pending.
+#
+# + id - Access request id
+# + return - Error or null if successful
+public isolated function revertAccessRequestToPending(int id) returns error? {
+    _ = check databaseClient->execute(revertAccessRequestToPendingQuery(id));
+}
+
+# Reject an access request.
+#
+# + id - Access request id
+# + reviewerEmail - Email of the reviewer
+# + reviewComment - Comment for the review
+# + return - Error or null if successful
+public isolated function rejectAccessRequest(int id, string reviewerEmail, string reviewComment) returns error? {
+    sql:ExecutionResult result = check databaseClient->execute(
+        rejectAccessRequestQuery(id, reviewerEmail, reviewComment));
+    if result.affectedRowCount == 0 {
+        return error("Access request is not Pending or was not found");
+    }
+}

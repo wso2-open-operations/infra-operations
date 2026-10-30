@@ -20,6 +20,7 @@ import SectionLabel from "@root/src/component/ui/SectionLabel";
 import DefaultTeamTable from "./tables/default-teams/DefaultTeamTable";
 import FunctionalLeads from "./tables/functional-leads/FunctionalLeads";
 import OrganizationsTable from "./tables/organizations/OrganizationsTable";
+import RepoTeamLeadsTable from "./tables/repo-team-leads/RepoTeamLeadsTable";
 import RepositoryTopicsTable from "./tables/repository-topics/RepositoryTopicsTable";
 
 export default function GithubSettings() {
@@ -39,24 +40,27 @@ export default function GithubSettings() {
           gridTemplateAreas: {
             xs: `"leads" 
                  "orgs" 
+                 "repoLeads"
                  "topics" 
                  "teams"`,
 
             sm: `"leads" 
                  "orgs" 
+                 "repoLeads"
                  "topics" 
                  "teams"`,
 
             md: `"leads" "orgs"
-                 "topics" "teams"`,
+                 "repoLeads" "topics"
+                 "teams" "teams"`,
 
-            // lg: `"leads orgs"
-            //      "topics teams"`,
             lg: `"orgs orgs orgs" 
+                 "repoLeads repoLeads repoLeads"
                  "leads topics teams"`,
           },
         }}
       >
+        <RepoTeamLeadsTable gridArea="repoLeads" />
         <DefaultTeamTable gridArea="teams" />
         <FunctionalLeads gridArea="leads" />
         <RepositoryTopicsTable gridArea="topics" />

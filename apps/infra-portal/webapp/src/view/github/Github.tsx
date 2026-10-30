@@ -114,6 +114,16 @@ export default function Github() {
           roles: [Role.EMPLOYEE],
         },
         {
+          label: "Request access to an existing repository",
+          tag: {
+            tagName: "employee",
+            tagBackground: blueBg,
+            tagColor: blueColor,
+          },
+          onClick: () => navigate("request-existing-repo-access"),
+          roles: [Role.EMPLOYEE],
+        },
+        {
           label: "My Access Requests History",
           //   description: "View and edit your access requests",
           tag: {

@@ -91,8 +91,21 @@ type TokenResponse record {|
 
 # Record to represent a GitHub team.
 public type GitHubTeam record {|
+    # Team display name
+    string name;
     # Team slug
     string slug;
+    json...;
+|};
+
+# Member of a GitHub team.
+public type TeamMember record {|
+    # GitHub login
+    string login;
+    # GitHub user id
+    int id;
+    # Public email, when the API returns one
+    string email?;
     json...;
 |};
 
@@ -385,8 +398,9 @@ public type OrganizationAndTeam record {
 public type TeamRepository record {|
     # Repository name
     string name;
-    # Repository page URL returned by the entity service
-    string url;
+    # Repository page URL
+    @jsondata:Name {value: "html_url"}
+    string htmlUrl;
     json...;
 |};
 
@@ -674,4 +688,11 @@ public type EmailVerificationResponse record {|
     string? githubUserId = ();
     # GitHub username null if verification failed.
     string? githubUsername = ();
+|};
+
+# Repository name returned by the organization repos listing.
+public type OrgRepository record {|
+    # Repository name
+    string name;
+    json...;
 |};

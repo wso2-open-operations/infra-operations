@@ -18,6 +18,7 @@ import {
   BookKey,
   BookMarked,
   ClipboardList,
+  GitPullRequest,
   Eye,
   HomeIcon,
   Settings,
@@ -78,6 +79,13 @@ export const routes: RouteObjectWithRole[] = [
         text: "Repository Access Requests",
         icon: React.createElement(BookKey),
         element: React.createElement(View.repositoryAccessRequests),
+        allowRoles: [Role.EMPLOYEE],
+      },
+      {
+        path: "request-existing-repo-access",
+        text: "Request Access",
+        icon: React.createElement(GitPullRequest),
+        element: React.createElement(View.requestExistingRepoAccess),
         allowRoles: [Role.EMPLOYEE],
       },
       {
