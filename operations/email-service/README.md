@@ -84,6 +84,8 @@ This is the standards-compliant way to embed an image directly in an email (a re
 | `413 Payload Too Large`     | `{"message": "request body too large"}`  |
 | `500 Internal Server Error` | `{"message": "failed to send email"}`    |
 
+**Large recipient lists**: the SMTP relay (Amazon SES) rejects any message with more than 50 recipients across `to`, `cc` and `bcc` combined, counting the addresses in the headers as well as the envelope. When a request has more than 50 unique recipients, the service sends it as several separate messages of at most 50 recipients each (in `to`, then `cc`, then `bcc` order), so each recipient gets exactly one copy but only sees the other recipients of their own message. Duplicate addresses are removed. If some messages fail, the rest are still sent and the request returns `500`; the log names the failed batches.
+
 ## Configuration
 
 The service prioritises OS environment variables, enabling seamless deployment in containerised environments (Kubernetes, Docker, Choreo). If a variable is not found in the environment it falls back to a `.env` file at the project root.

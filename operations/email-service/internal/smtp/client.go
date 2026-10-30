@@ -21,6 +21,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -228,11 +229,10 @@ func (c *Client) SendEmail(ctx context.Context, msg *Message) error {
 		defer cancel()
 	}
 
-	raw, err := buildMIMEMessage(&snap)
-	if err != nil {
-		return fmt.Errorf(errFmtBuildMIME, err)
+	batches := splitRecipients(&snap)
+	if len(batches) == 0 {
+		return errors.New(errNoRecipients)
 	}
-
 	sc, cleanup, err := c.dialAndAuth(ctx)
 	if err != nil {
 		return err
@@ -245,31 +245,102 @@ func (c *Client) SendEmail(ctx context.Context, msg *Message) error {
 		envelopeFrom = parsed.Address
 	}
 
-	// Set envelope sender.
-	if err = sc.Mail(envelopeFrom); err != nil {
-		return fmt.Errorf(errFmtMailFrom, err)
+	// The relay caps the recipients of one message (To + CC + BCC together,
+	// counted from the headers as well as the envelope), so each batch is its
+	// own message whose headers list only that batch. A failed batch does not
+	// stop the remaining ones; all failures are returned together.
+	var errs []error
+	for i, batch := range batches {
+		// Build each message just before sending it so only one copy of the
+		// attachments' MIME encoding is held at a time. The batches differ only
+		// in their recipient headers, so a build error is the same for every
+		// batch and surfaces on the first one, before anything is sent.
+		raw, err := buildMIMEMessage(&batch)
+		if err != nil {
+			return errors.Join(append(errs, fmt.Errorf(errFmtBuildMIME, err))...)
+		}
+		if err := sendBatch(sc, envelopeFrom, envelopeAddrs(&batch), raw); err != nil {
+			errs = append(errs, fmt.Errorf(errFmtBatch, i+1, err))
+			// A failed transaction can leave the session mid-command; reset
+			// it so the next batch starts clean. If the connection is dead
+			// the next batch fails too and is reported.
+			_ = sc.Reset()
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// bareAddr returns the address part of a possibly display-named address.
+func bareAddr(addr string) string {
+	if parsed, err := mail.ParseAddress(addr); err == nil {
+		return parsed.Address
+	}
+	return addr
+}
+
+// envelopeAddrs returns the bare To, CC and BCC addresses of msg.
+func envelopeAddrs(msg *Message) []string {
+	out := make([]string, 0, len(msg.To)+len(msg.CC)+len(msg.BCC))
+	for _, list := range [][]string{msg.To, msg.CC, msg.BCC} {
+		for _, a := range list {
+			out = append(out, bareAddr(a))
+		}
+	}
+	return out
+}
+
+// splitRecipients drops duplicate recipients (first role wins, in To, CC, BCC
+// order) and cuts the rest into copies of msg that each carry at most
+// maxRecipientsPerTransaction recipients across To, CC and BCC. A recipient
+// appears in exactly one copy, so nobody gets the email twice, but a
+// recipient only sees the others in their own copy. It returns nil when there
+// are no recipients.
+func splitRecipients(msg *Message) []Message {
+	seen := make(map[string]struct{})
+	type rcpt struct {
+		addr string
+		role int // 0 To, 1 CC, 2 BCC
+	}
+	var all []rcpt
+	for role, list := range [][]string{msg.To, msg.CC, msg.BCC} {
+		for _, a := range list {
+			key := strings.ToLower(bareAddr(a))
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			all = append(all, rcpt{addr: a, role: role})
+		}
 	}
 
-	// Add unique recipients (To + CC + BCC) to the envelope.
-	seen := make(map[string]struct{})
-	allRecipients := make([]string, 0, len(snap.To)+len(snap.CC)+len(snap.BCC))
-	allRecipients = append(allRecipients, snap.To...)
-	allRecipients = append(allRecipients, snap.CC...)
-	allRecipients = append(allRecipients, snap.BCC...)
-
-	for _, rcpt := range allRecipients {
-		envelopeRcpt := rcpt
-		if parsed, err := mail.ParseAddress(rcpt); err == nil {
-			envelopeRcpt = parsed.Address
+	var batches []Message
+	for start := 0; start < len(all); start += maxRecipientsPerTransaction {
+		end := min(start+maxRecipientsPerTransaction, len(all))
+		batch := *msg
+		batch.To, batch.CC, batch.BCC = nil, nil, nil
+		for _, r := range all[start:end] {
+			switch r.role {
+			case 0:
+				batch.To = append(batch.To, r.addr)
+			case 1:
+				batch.CC = append(batch.CC, r.addr)
+			default:
+				batch.BCC = append(batch.BCC, r.addr)
+			}
 		}
+		batches = append(batches, batch)
+	}
+	return batches
+}
 
-		normalized := strings.ToLower(envelopeRcpt)
-		if _, ok := seen[normalized]; ok {
-			continue
-		}
-		seen[normalized] = struct{}{}
-
-		if err = sc.Rcpt(envelopeRcpt); err != nil {
+// sendBatch runs one SMTP transaction: MAIL FROM, RCPT TO for each recipient,
+// then DATA with raw.
+func sendBatch(sc *smtp.Client, from string, rcpts []string, raw []byte) error {
+	if err := sc.Mail(from); err != nil {
+		return fmt.Errorf(errFmtMailFrom, err)
+	}
+	for _, rcpt := range rcpts {
+		if err := sc.Rcpt(rcpt); err != nil {
 			return fmt.Errorf(errFmtRcptTo, err)
 		}
 	}

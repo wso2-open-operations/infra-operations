@@ -31,6 +31,10 @@ const (
 	PortSMTPS    = "465"
 	PortSTARTTLS = "587"
 
+	// maxRecipientsPerTransaction is the most RCPT TO commands sent in one SMTP
+	// transaction; the relay rejects more than this with a 554.
+	maxRecipientsPerTransaction = 50
+
 	// Connection and handshake errors — shared by Ping and SendEmail.
 	errFmtDial      = "dial SMTP server: %w"
 	errFmtTLSDial   = "TLS dial SMTP server: %w"
@@ -44,6 +48,8 @@ const (
 	errFmtRcptTo    = "RCPT TO: %w"
 	errFmtData      = "DATA command: %w"
 	errFmtWriteBody = "write message body: %w"
+	errFmtBatch     = "recipient batch %d: %w"
+	errNoRecipients = "no recipients"
 
 	// MIME message construction.
 	errFmtInvalidMIMEType   = "invalid MIME type %q: %w"
